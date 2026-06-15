@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
+import { generateUniqueDossierCode } from './dossierController.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
 
@@ -33,6 +34,12 @@ export const register = async (req: Request, res: Response) => {
       }
     });
 
+    const code_dossier = await generateUniqueDossierCode();
+    const dossier = await prisma.dossier.create({
+      data: { code_dossier, etudiant_id: etudiant.id },
+      select: { id: true, code_dossier: true },
+    });
+
     const token = jwt.sign(
       { id: etudiant.id, email: etudiant.email },
       JWT_SECRET,
@@ -47,7 +54,8 @@ export const register = async (req: Request, res: Response) => {
         nom: etudiant.nom,
         prenom: etudiant.prenom,
         email: etudiant.email
-      }
+      },
+      dossier: { id: dossier.id, code_dossier: dossier.code_dossier },
     });
   } catch (error) {
     console.error(error);

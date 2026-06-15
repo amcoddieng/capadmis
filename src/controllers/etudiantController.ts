@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma.js';
 import { EtudiantRequest } from '../middleware/etudiantMiddleware.js';
 import { PersonnelRequest } from '../middleware/personnelMiddleware.js';
+import { generateUniqueDossierCode } from './dossierController.js';
 
 const SAFE_SELECT = {
   id: true, nom: true, prenom: true, email: true,
@@ -60,10 +61,16 @@ export const createEtudiantByAdmin = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(mdp, 10);
     const etudiant = await prisma.etudiant.create({
       data: { nom, prenom, email, mdp: hashedPassword, sexe, ville, payes, date_de_naissance: new Date(date_de_naissance), lieu_de_naissance },
-      select: SAFE_SELECT,
+      select: { ...SAFE_SELECT, id: true },
     });
 
-    return res.status(201).json({ message: 'Étudiant créé avec succès', etudiant });
+    const code_dossier = await generateUniqueDossierCode();
+    const dossier = await prisma.dossier.create({
+      data: { code_dossier, etudiant_id: etudiant.id },
+      select: { id: true, code_dossier: true },
+    });
+
+    return res.status(201).json({ message: 'Étudiant créé avec succès', etudiant, dossier });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Erreur serveur' });

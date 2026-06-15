@@ -11,6 +11,24 @@ datasource db {
   provider = "postgresql"
 }
 
+enum StatusDossier {
+  EN_COURS_D_ETUDE
+  VALIDE
+  CHANGEMENT_A_APPORTER
+}
+
+enum StatusAdmission {
+  ADMISSION_EN_COURS
+  ADMISSION_VALIDE
+  ADMISSION_INVALIDE
+}
+
+enum StatusVisa {
+  DEMANDE_VISA_EN_COURS
+  DEMANDE_VISA_VALIDE
+  DEMANDE_VISA_INVALIDE
+}
+
 enum Role {
   superadmin
   admin
@@ -26,9 +44,11 @@ model personnel {
   email     String   @unique
   mdp       String
   role      Role
-  bloque    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  bloque             Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  dossiers_admission dossier[] @relation("ConseillerAdmissionDossiers")
+  dossiers_visa      dossier[] @relation("ConseillerVisaDossiers")
 }
 
 model etudiant {
@@ -45,4 +65,21 @@ model etudiant {
   bloque            Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  dossier           dossier?
+}
+
+model dossier {
+  id                      Int        @id @default(autoincrement())
+  code_dossier            String     @unique
+  etudiant_id             Int        @unique
+  etudiant                etudiant   @relation(fields: [etudiant_id], references: [id], onDelete: Cascade)
+  conseiller_admission_id Int?
+  conseiller_admission    personnel? @relation("ConseillerAdmissionDossiers", fields: [conseiller_admission_id], references: [id])
+  conseiller_visa_id      Int?
+  conseiller_visa         personnel?    @relation("ConseillerVisaDossiers", fields: [conseiller_visa_id], references: [id])
+  status                  StatusDossier @default(EN_COURS_D_ETUDE)
+  status_admission        StatusAdmission?
+  status_visa             StatusVisa?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
 }
