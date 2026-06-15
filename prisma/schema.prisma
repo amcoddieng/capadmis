@@ -11,6 +11,26 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  superadmin
+  admin
+  conseiller_visa
+  conseiller_admission
+}
+
+model personnel {
+  id        Int      @id @default(autoincrement())
+  prenom    String
+  nom       String
+  code      String   @unique
+  email     String   @unique
+  mdp       String
+  role      Role
+  bloque    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model etudiant {
   id                Int      @id @default(autoincrement())
   nom               String
@@ -22,6 +42,7 @@ model etudiant {
   payes             String
   date_de_naissance DateTime
   lieu_de_naissance String
+  bloque            Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

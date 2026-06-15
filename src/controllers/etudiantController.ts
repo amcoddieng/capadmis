@@ -1,0 +1,150 @@
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import prisma from '../lib/prisma.js';
+import { EtudiantRequest } from '../middleware/etudiantMiddleware.js';
+import { PersonnelRequest } from '../middleware/personnelMiddleware.js';
+
+const SAFE_SELECT = {
+  id: true, nom: true, prenom: true, email: true,
+  sexe: true, ville: true, payes: true,
+  date_de_naissance: true, lieu_de_naissance: true,
+  bloque: true, createdAt: true, updatedAt: true,
+} as const;
+
+export const updateSelf = async (req: EtudiantRequest, res: Response) => {
+  try {
+    const id = req.etudiant?.id;
+    if (!id) return res.status(401).json({ message: 'Non authentifié' });
+
+    const etudiant = await prisma.etudiant.findUnique({ where: { id } });
+    if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
+    if (etudiant.bloque) return res.status(403).json({ message: 'Compte bloqué' });
+
+    const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, mdp } = req.body as {
+      nom?: string; prenom?: string; sexe?: string; ville?: string;
+      payes?: string; date_de_naissance?: string; lieu_de_naissance?: string; mdp?: string;
+    };
+
+    const data: Record<string, unknown> = {};
+    if (nom) data.nom = nom;
+    if (prenom) data.prenom = prenom;
+    if (sexe) data.sexe = sexe;
+    if (ville) data.ville = ville;
+    if (payes) data.payes = payes;
+    if (lieu_de_naissance) data.lieu_de_naissance = lieu_de_naissance;
+    if (date_de_naissance) data.date_de_naissance = new Date(date_de_naissance);
+    if (mdp) data.mdp = await bcrypt.hash(mdp, 10);
+
+    const updated = await prisma.etudiant.update({ where: { id }, data, select: SAFE_SELECT });
+    return res.status(200).json({ message: 'Profil mis à jour', etudiant: updated });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+export const createEtudiantByAdmin = async (req: Request, res: Response) => {
+  try {
+    const { nom, prenom, email, mdp, sexe, ville, payes, date_de_naissance, lieu_de_naissance } = req.body as {
+      nom: string; prenom: string; email: string; mdp: string; sexe: string;
+      ville: string; payes: string; date_de_naissance: string; lieu_de_naissance: string;
+    };
+
+    if (!nom || !prenom || !email || !mdp || !sexe || !ville || !payes || !date_de_naissance || !lieu_de_naissance) {
+      return res.status(400).json({ message: 'Tous les champs sont requis' });
+    }
+
+    const existing = await prisma.etudiant.findUnique({ where: { email } });
+    if (existing) return res.status(409).json({ message: 'Cet email est déjà utilisé' });
+
+    const hashedPassword = await bcrypt.hash(mdp, 10);
+    const etudiant = await prisma.etudiant.create({
+      data: { nom, prenom, email, mdp: hashedPassword, sexe, ville, payes, date_de_naissance: new Date(date_de_naissance), lieu_de_naissance },
+      select: SAFE_SELECT,
+    });
+
+    return res.status(201).json({ message: 'Étudiant créé avec succès', etudiant });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+export const updateEtudiantByAdmin = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params['id'] as string, 10);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID invalide' });
+
+    const etudiant = await prisma.etudiant.findUnique({ where: { id } });
+    if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
+
+    const { nom, prenom, email, sexe, ville, payes, date_de_naissance, lieu_de_naissance, mdp } = req.body as {
+      nom?: string; prenom?: string; email?: string; sexe?: string; ville?: string;
+      payes?: string; date_de_naissance?: string; lieu_de_naissance?: string; mdp?: string;
+    };
+
+    const data: Record<string, unknown> = {};
+    if (nom) data.nom = nom;
+    if (prenom) data.prenom = prenom;
+    if (email) data.email = email;
+    if (sexe) data.sexe = sexe;
+    if (ville) data.ville = ville;
+    if (payes) data.payes = payes;
+    if (lieu_de_naissance) data.lieu_de_naissance = lieu_de_naissance;
+    if (date_de_naissance) data.date_de_naissance = new Date(date_de_naissance);
+    if (mdp) data.mdp = await bcrypt.hash(mdp, 10);
+
+    const updated = await prisma.etudiant.update({ where: { id }, data, select: SAFE_SELECT });
+    return res.status(200).json({ message: 'Étudiant mis à jour', etudiant: updated });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+export const deleteEtudiant = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params['id'] as string, 10);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID invalide' });
+
+    const etudiant = await prisma.etudiant.findUnique({ where: { id } });
+    if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
+
+    await prisma.etudiant.delete({ where: { id } });
+    return res.status(200).json({ message: 'Étudiant supprimé avec succès' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+export const bloquerEtudiant = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params['id'] as string, 10);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID invalide' });
+
+    const etudiant = await prisma.etudiant.findUnique({ where: { id } });
+    if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
+
+    const bloque = !etudiant.bloque;
+    const updated = await prisma.etudiant.update({ where: { id }, data: { bloque }, select: SAFE_SELECT });
+
+    return res.status(200).json({
+      message: bloque ? 'Étudiant bloqué' : 'Étudiant débloqué',
+      etudiant: updated,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+export const listerEtudiants = async (_req: PersonnelRequest, res: Response) => {
+  try {
+    const etudiants = await prisma.etudiant.findMany({ select: SAFE_SELECT, orderBy: { createdAt: 'desc' } });
+    return res.status(200).json({ etudiants });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};

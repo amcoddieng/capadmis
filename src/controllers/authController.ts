@@ -1,11 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
+import prisma from '../lib/prisma.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
 
@@ -69,6 +65,10 @@ export const login = async (req: Request, res: Response) => {
 
     if (!etudiant) {
       return res.status(400).json({ message: 'Email ou mot de passe incorrect' });
+    }
+
+    if (etudiant.bloque) {
+      return res.status(403).json({ message: 'Votre compte est bloqué' });
     }
 
     const isMatch = await bcrypt.compare(mdp, etudiant.mdp);
