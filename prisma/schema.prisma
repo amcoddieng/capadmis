@@ -29,6 +29,12 @@ enum StatusVisa {
   DEMANDE_VISA_INVALIDE
 }
 
+enum StatusInfosDossier {
+  VALIDE
+  EN_ATTENTE
+  INVALIDE
+}
+
 enum Role {
   superadmin
   admin
@@ -80,6 +86,20 @@ model dossier {
   status                  StatusDossier @default(EN_COURS_D_ETUDE)
   status_admission        StatusAdmission?
   status_visa             StatusVisa?
+  infos_dossier           infos_dossier?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
+}
+
+model infos_dossier {
+  id              Int                @id @default(autoincrement())
+  code_dossier    String             @unique
+  dossier         dossier            @relation(fields: [code_dossier], references: [code_dossier], onDelete: Cascade)
+  niveau_etude    String
+  pays_souhaite   String
+  filieres        String[]
+  nombre_fois_bac Int
+  status          StatusInfosDossier @default(EN_ATTENTE)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 }
