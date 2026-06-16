@@ -196,6 +196,49 @@ export const loginPersonnel = async (req: Request, res: Response) => {
   }
 };
 
+export const updateSelfPersonnel = async (req: Request & { personnel?: { id: number; role: string } }, res: Response) => {
+  try {
+    const id = req.personnel?.id;
+    if (!id) return res.status(401).json({ message: 'Non authentifié' });
+
+    const target = await prisma.personnel.findUnique({ where: { id } });
+    if (!target) return res.status(404).json({ message: 'Personnel introuvable' });
+    if (target.bloque) return res.status(403).json({ message: 'Compte bloqué' });
+
+    const { prenom, nom, mdp, mdp_actuel } = req.body as {
+      prenom?: string; nom?: string; mdp?: string; mdp_actuel?: string;
+    };
+
+    const data: Record<string, unknown> = {};
+    if (prenom) data.prenom = prenom;
+    if (nom) data.nom = nom;
+
+    if (mdp) {
+      if (!mdp_actuel) {
+        return res.status(400).json({ message: 'mdp_actuel est requis pour changer le mot de passe' });
+      }
+      const isMatch = await bcrypt.compare(mdp_actuel, target.mdp);
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
+      }
+      if (mdp.length < 6) {
+        return res.status(400).json({ message: 'Le nouveau mot de passe doit contenir au moins 6 caractères' });
+      }
+      data.mdp = await bcrypt.hash(mdp, 10);
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ message: 'Au moins un champ à modifier est requis' });
+    }
+
+    const updated = await prisma.personnel.update({ where: { id }, data, select: SAFE_SELECT });
+    return res.status(200).json({ message: 'Profil mis à jour', personnel: updated });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
 export const listerPersonnelPourSuperAdmin = async (_req: Request, res: Response) => {
   try {
     const personnel = await prisma.personnel.findMany({

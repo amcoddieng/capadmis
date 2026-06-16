@@ -6,6 +6,8 @@ import dossierRoutes from './route/dossierRoutes.js';
 import infosDossierRoutes from './route/infosDossierRoutes.js';
 import mailRoutes from './route/mailRoutes.js';
 import codeTemporaireRoutes from './route/codeTemporaireRoutes.js';
+import pieceJointeRoutes from './route/pieceJointeRoutes.js';
+import notificationRoutes from './route/notificationRoutes.js';
 
 const app = express();
 
@@ -17,5 +19,7 @@ app.use('/api/dossiers', dossierRoutes);
 app.use('/api/infos-dossier', infosDossierRoutes);
 app.use('/api/mail', mailRoutes);
 app.use('/api/codes-temporaires', codeTemporaireRoutes);
+app.use('/api/pieces-jointes', pieceJointeRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 export default app;

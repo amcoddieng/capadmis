@@ -1,0 +1,35 @@
+-- CreateEnum
+CREATE TYPE "StatusPieceJointe" AS ENUM ('EN_COURS_DE_VERIFICATION', 'A_CHANGER', 'VALIDE');
+
+-- CreateEnum
+CREATE TYPE "TypePieceJointe" AS ENUM ('PHOTO_PROFIL', 'ATTESTATION', 'DIPLOME_BAC', 'RELEVE_NOTES_BAC', 'DIPLOME_LICENCE', 'DIPLOME_MASTER', 'DIPLOME_DOCTORAT', 'PASSEPORT', 'CARTE_IDENTITE', 'BULLETIN_NOTES_LICENCE_1', 'BULLETIN_NOTES_LICENCE_2', 'BULLETIN_NOTES_LICENCE_3', 'BULLETIN_NOTES_MASTER_1', 'BULLETIN_NOTES_MASTER_2', 'BULLETIN_NOTES_DOCTORAT', 'LETTRE_MOTIVATION', 'CV', 'BULLETIN_NOTES_SECONDE', 'BULLETIN_NOTES_PREMIERE', 'BULLETIN_NOTES_TERMINALE', 'AUTRE');
+
+-- CreateTable
+CREATE TABLE "piece_jointe" (
+    "id" SERIAL NOT NULL,
+    "nom" TEXT NOT NULL,
+    "codeDossier" TEXT NOT NULL,
+    "type" "TypePieceJointe" NOT NULL,
+    "status" "StatusPieceJointe" NOT NULL DEFAULT 'EN_COURS_DE_VERIFICATION',
+    "date_creation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "piece_jointe_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "notification" (
+    "id" SERIAL NOT NULL,
+    "titre" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "date_creation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "notification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "piece_jointe_nom_key" ON "piece_jointe"("nom");
+
+-- AddForeignKey
+ALTER TABLE "piece_jointe" ADD CONSTRAINT "piece_jointe_codeDossier_fkey" FOREIGN KEY ("codeDossier") REFERENCES "dossier"("code_dossier") ON DELETE CASCADE ON UPDATE CASCADE;

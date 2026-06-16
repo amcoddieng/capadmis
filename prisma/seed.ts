@@ -10,42 +10,83 @@ async function generateUniqueCode(): Promise<string> {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let code: string;
   let exists: boolean;
+
   do {
     code = Array.from({ length: 6 }, () =>
       chars.charAt(Math.floor(Math.random() * chars.length))
     ).join("");
-    const found = await prisma.personnel.findUnique({ where: { code } });
+
+    const found = await prisma.personnel.findUnique({
+      where: { code },
+    });
+
     exists = found !== null;
   } while (exists);
+
   return code;
 }
 
-async function main() {
-  const existing = await prisma.personnel.findFirst({
-    where: { role: "superadmin" },
+async function createUser(
+  prenom: string,
+  nom: string,
+  email: string,
+  role: string,
+  password: string
+) {
+  const existing = await prisma.personnel.findUnique({
+    where: { email },
   });
 
   if (existing) {
-    console.log("Superadmin already exists — skipping seed.");
+    console.log(`${role} existe déjà.`);
     return;
   }
 
   const code = await generateUniqueCode();
-  const hashedPassword = await bcrypt.hash("superadmin123", 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  const superadmin = await prisma.personnel.create({
+  const user = await prisma.personnel.create({
     data: {
-      prenom: "Super",
-      nom: "Admin",
+      prenom,
+      nom,
       code,
-      email: "superadmin@capadmis.com",
+      email,
       mdp: hashedPassword,
-      role: "superadmin",
+      role: role as any,
     },
   });
 
-  console.log(`Superadmin créé — code: ${superadmin.code}, email: ${superadmin.email}`);
-  console.log("Mot de passe par défaut : superadmin123 (à changer en production)");
+  console.log(
+    `${role} créé — code: ${user.code}, email: ${user.email}`
+  );
+}
+
+async function main() {
+  await createUser(
+    "Super",
+    "Admin",
+    "superadmin@capadmis.com",
+    "superadmin",
+    "superadmin123"
+  );
+
+  await createUser(
+    "Conseiller",
+    "Admission",
+    "admission@capadmis.com",
+    "conseiller_admission",
+    "admission123"
+  );
+
+  await createUser(
+    "Conseiller",
+    "Visa",
+    "visa@capadmis.com",
+    "conseiller_visa",
+    "visa123"
+  );
+
+  console.log("Seed terminé.");
 }
 
 main()

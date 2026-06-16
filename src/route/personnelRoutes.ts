@@ -3,6 +3,7 @@ import {
   createPersonnel,
   loginPersonnel,
   updatePersonnelById,
+  updateSelfPersonnel,
   deletePersonnelById,
   bloquerPersonnel,
   listerPersonnelPourSuperAdmin,
@@ -19,6 +20,7 @@ const router = Router();
 router.post('/login', loginPersonnel);
 router.get('/liste', verifyPersonnelToken, requireSuperAdmin, listerPersonnelPourSuperAdmin);
 router.get('/conseillers', verifyPersonnelToken, requireSuperAdminOrAdmin, listerConseillersPourAdmin);
+router.put('/me', verifyPersonnelToken, updateSelfPersonnel);
 router.post('/create', verifyPersonnelToken, requireSuperAdminOrAdmin, createPersonnel);
 router.put('/:id', verifyPersonnelToken, requireSuperAdminOrAdmin, updatePersonnelById);
 router.delete('/:id', verifyPersonnelToken, requireSuperAdminOrAdmin, deletePersonnelById);

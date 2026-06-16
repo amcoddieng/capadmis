@@ -11,15 +11,16 @@ const transporter = nodemailer.createTransport({
 export interface MailOptions {
   to: string;
   subject: string;
-  message: string;
+  message?: string;
+  html?: string;
 }
 
-export async function sendMail({ to, subject, message }: MailOptions): Promise<void> {
+export async function sendMail({ to, subject, message, html }: MailOptions): Promise<void> {
   await transporter.sendMail({
     from: `"CapAdmis" <${process.env.GMAIL_USER}>`,
     to,
     subject,
-    text: message,
-    html: `<p>${message.replace(/\n/g, '<br/>')}</p>`,
+    text: message ?? '',
+    html: html ?? (message ? `<p>${message.replace(/\n/g, '<br/>')}</p>` : ''),
   });
 }

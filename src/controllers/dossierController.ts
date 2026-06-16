@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { StatusDossier, StatusAdmission, StatusVisa } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { EtudiantRequest } from '../middleware/etudiantMiddleware.js';
+import { envoyerNotification } from '../lib/notificationService.js';
 
 const DOSSIER_SELECT = {
   id: true,
@@ -166,6 +167,23 @@ export const changerStatus = async (req: Request & { personnel?: { id: number; r
     }
 
     const updated = await prisma.dossier.update({ where: { id }, data, select: DOSSIER_SELECT });
+
+    const etudiantEmail = updated.etudiant.email;
+    const etudiantPrenom = updated.etudiant.prenom;
+    const etudiantNom = updated.etudiant.nom;
+    const codeDossier = updated.code_dossier;
+
+    if (status === 'VALIDE') {
+      envoyerNotification('validation_dossier', etudiantEmail, {
+        prenomDestinataire: etudiantPrenom, nomDestinataire: etudiantNom, codeDossier,
+      }).catch(console.error);
+    } else if (status || status_admission || status_visa) {
+      const nouveauStatut = status ?? status_admission ?? status_visa ?? '';
+      envoyerNotification('change_status', etudiantEmail, {
+        prenomDestinataire: etudiantPrenom, nomDestinataire: etudiantNom, codeDossier, nouveauStatut,
+      }).catch(console.error);
+    }
+
     return res.status(200).json({ message: 'Status mis à jour', dossier: updated });
   } catch (error) {
     console.error(error);
@@ -199,6 +217,26 @@ export const assignerConseiller = async (req: Request, res: Response) => {
       : { conseiller_visa_id: Number(conseiller_id) };
 
     const updated = await prisma.dossier.update({ where: { id }, data, select: DOSSIER_SELECT });
+
+    const etudiant = updated.etudiant;
+    const notifTypeEtudiant = type === 'admission'
+      ? 'assignation_conseiller_admission' as const
+      : 'assignation_conseiller_visa' as const;
+
+    envoyerNotification(notifTypeEtudiant, etudiant.email, {
+      prenomDestinataire: etudiant.prenom,
+      nomDestinataire: etudiant.nom,
+      codeDossier: updated.code_dossier,
+      prenomConseiller: conseiller.prenom,
+      nomConseiller: conseiller.nom,
+    }).catch(console.error);
+
+    envoyerNotification('assignation_dossier', conseiller.email, {
+      prenomDestinataire: conseiller.prenom,
+      nomDestinataire: conseiller.nom,
+      codeDossier: updated.code_dossier,
+    }).catch(console.error);
+
     return res.status(200).json({ message: 'Conseiller assigné avec succès', dossier: updated });
   } catch (error) {
     console.error(error);

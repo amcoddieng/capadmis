@@ -93,6 +93,38 @@ Connexion d'un étudiant.
 
 ## 🏢 Personnel
 
+### `PUT /api/personnel/me`
+Le personnel connecté modifie son propre profil (nom, prénom, mot de passe).
+
+**Auth :** Token personnel — tout rôle
+
+> Pour changer le mot de passe, `mdp_actuel` est **obligatoire**.
+
+**Body :** *(tous optionnels, au moins un requis)*
+```json
+{
+  "prenom": "Nouveau prénom",
+  "nom": "Nouveau nom",
+  "mdp_actuel": "ancienmdp",
+  "mdp": "nouveaumotdepasse"
+}```
+
+**Réponse `200` :**
+```json
+{
+  "message": "Profil mis à jour",
+  "personnel": { ... }
+}```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | `mdp` fourni sans `mdp_actuel`, nouveau mdp < 6 caractères, ou aucun champ fourni |
+| `401` | `mdp_actuel` incorrect |
+| `403` | Compte bloqué |
+
+---
+
 ### `POST /api/personnel/login`
 Connexion d'un membre du personnel (superadmin, admin, conseiller).
 
@@ -273,6 +305,7 @@ L'étudiant connecté modifie son propre profil.
 **Auth :** Token étudiant
 
 > ⚠️ Ne peut pas modifier son email via cette route. Compte bloqué → `403`.
+> Pour changer le mot de passe, `mdp_actuel` est **obligatoire**.
 
 **Body :** *(tous optionnels)*
 ```json
@@ -284,9 +317,16 @@ L'étudiant connecté modifie son propre profil.
   "payes": "Sénégal",
   "date_de_naissance": "2000-01-01",
   "lieu_de_naissance": "Thiès",
+  "mdp_actuel": "ancienmdp",
   "mdp": "nouveaumotdepasse"
 }
 ```
+
+**Erreurs spécifiques au changement de mot de passe :**
+| Code | Cause |
+|---|---|
+| `400` | `mdp` fourni sans `mdp_actuel`, ou nouveau mdp < 6 caractères |
+| `401` | `mdp_actuel` incorrect |
 
 **Réponse `200` :**
 ```json
@@ -606,20 +646,31 @@ Modifier les informations d'un dossier.
 
 **Params :** `code_dossier`
 
-**Body :** *(tous optionnels)*
+**Body :** *(tous optionnels sauf `code_validation` pour les étudiants)*
 ```json
 {
   "niveau_etude": "Master 1",
   "pays_souhaite": "Canada",
   "filieres": ["Intelligence Artificielle"],
   "nombre_fois_bac": 2,
-  "status": "VALIDE"
+  "status": "VALIDE",
+  "code_validation": "482931"
 }
 ```
 
-> ⚠️ Si l'appelant est un **étudiant**, le `status` est automatiquement mis à `EN_ATTENTE`.
+> ⚠️ Si l'appelant est un **étudiant** :
+> - `code_validation` est **obligatoire** — générez-le d'abord via `POST /api/codes-temporaires/generer` avec `type: "modification_infos"`
+> - Le `status` est automatiquement forcé à `EN_ATTENTE` quel que soit ce qui est envoyé
+> - Le code est **consommé** après utilisation (non réutilisable)
 
-**Valeurs `status` :** `EN_ATTENTE`, `VALIDE`, `INVALIDE`
+**Flux étudiant :**
+```
+1. POST /api/codes-temporaires/generer  →  { email, type: "modification_infos" }
+2. Récupérer le code reçu par email
+3. PUT /api/infos-dossier/:code_dossier →  { ...modifications, code_validation: "482931" }
+```
+
+**Valeurs `status` (personnel uniquement) :** `EN_ATTENTE`, `VALIDE`, `INVALIDE`
 
 **Réponse `200` :**
 ```json
@@ -629,9 +680,142 @@ Modifier les informations d'un dossier.
 }
 ```
 
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | `code_validation` absent (étudiant), code invalide ou expiré |
+
 ---
 
-## � Codes Temporaires
+## 📎 Pièces Jointes
+
+Stockage sur **Cloudflare R2** (`capadmis-files`). Formats acceptés : **images** (JPEG, PNG, GIF, WEBP) et **PDF**, taille max **10 Mo**.
+
+### Nommage des fichiers (généré automatiquement)
+```
+{codeDossier}_{type}_{etudiantId}_{timestamp}.{ext}
+ex : 87654321_PASSEPORT_42_1718530012345.pdf
+```
+
+### Permissions
+
+| Action | Étudiant | Conseiller assigné | Admin / Superadmin |
+|---|---|---|---|
+| Ajouter | ✅ son dossier | ❌ | ✅ tout |
+| Lister | ✅ son dossier | ✅ dossiers assignés | ✅ tout |
+| Consulter (URL signée 1h) | ✅ son dossier | ✅ dossiers assignés | ✅ tout |
+| Remplacer fichier | ✅ son dossier | ❌ | ✅ tout |
+| Modifier status | ❌ | ✅ dossiers assignés | ✅ tout |
+| Supprimer | ✅ son dossier | ❌ | ✅ tout |
+
+---
+
+### `POST /api/pieces-jointes/`
+Ajouter une pièce jointe à un dossier.
+
+**Auth :** Token étudiant ou admin/superadmin — **Content-Type :** `multipart/form-data`
+
+| Champ | Description |
+|---|---|
+| `fichier` | Fichier image ou PDF (max 10 Mo) |
+| `codeDossier` | Code du dossier cible |
+| `type` | Valeur `TypePieceJointe` |
+
+**Réponse `201` :**
+```json
+{
+  "message": "Pièce jointe ajoutée",
+  "piece": {
+    "id": 1,
+    "nom": "87654321_PASSEPORT_42_1718530012345.pdf",
+    "codeDossier": "87654321",
+    "type": "PASSEPORT",
+    "status": "EN_COURS_DE_VERIFICATION",
+    "date_creation": "...",
+    "updatedAt": "..."
+  }
+}
+```
+
+---
+
+### `GET /api/pieces-jointes/dossier/:code_dossier`
+Lister toutes les pièces jointes d'un dossier.
+
+**Auth :** Token étudiant (son dossier) ou personnel (assigné ou admin/superadmin)
+
+**Réponse `200` :**
+```json
+{ "pieces": [ { "id": 1, "nom": "...", "type": "PASSEPORT", "status": "EN_COURS_DE_VERIFICATION", ... } ] }
+```
+
+---
+
+### `GET /api/pieces-jointes/:id`
+Obtenir une URL de téléchargement signée valable **1 heure**.
+
+**Auth :** Token étudiant (son dossier) ou personnel (assigné ou admin/superadmin)
+
+**Réponse `200` :**
+```json
+{
+  "piece": { ... },
+  "url": "https://...r2.cloudflarestorage.com/...?X-Amz-Signature=...&X-Amz-Expires=3600"
+}
+```
+
+---
+
+### `PUT /api/pieces-jointes/:id`
+Remplacer le fichier d'une pièce jointe. L'ancien fichier est supprimé de R2 avant upload du nouveau.
+
+**Auth :** Token étudiant (son dossier) ou admin/superadmin — **Content-Type :** `multipart/form-data`
+
+| Champ | Description |
+|---|---|
+| `fichier` | Nouveau fichier (image ou PDF) |
+| `type` | *(admin uniquement)* changer le type |
+| `status` | *(admin uniquement)* changer le statut |
+
+**Réponse `200` :**
+```json
+{ "message": "Pièce jointe mise à jour", "piece": { ... } }
+```
+
+---
+
+### `PATCH /api/pieces-jointes/:id/status`
+Modifier le statut d'une pièce jointe.
+
+**Auth :** Token personnel — conseiller assigné, admin ou superadmin
+
+**Body :**
+```json
+{ "status": "VALIDE" }
+```
+
+**Valeurs `status` :** `EN_COURS_DE_VERIFICATION`, `A_CHANGER`, `VALIDE`
+
+**Réponse `200` :**
+```json
+{ "message": "Statut mis à jour", "piece": { ..., "status": "VALIDE" } }
+```
+
+---
+
+### `DELETE /api/pieces-jointes/:id`
+Supprimer une pièce jointe (fichier R2 + enregistrement DB).
+
+**Auth :** Token étudiant (son dossier) ou admin/superadmin
+
+**Réponse `200` :**
+```json
+{ "message": "Pièce jointe supprimée" }
+```
+
+---
+
+## 🔑 Codes Temporaires
 
 Mécanisme unique de sécurisation des opérations sensibles pour **étudiants et personnel** (admin, superadmin, conseillers).
 

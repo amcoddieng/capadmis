@@ -12,6 +12,7 @@ datasource db {
 }
 
 enum StatusDossier {
+  non_demarre
   EN_COURS_D_ETUDE
   VALIDE
   CHANGEMENT_A_APPORTER
@@ -35,6 +36,17 @@ enum StatusInfosDossier {
   INVALIDE
 }
 
+enum TypeNotification {
+  assignation_conseiller_admission
+  assignation_conseiller_visa
+  validation_dossier
+  change_status
+  message_recu
+  demande_document
+  demande_changement_document
+  assignation_dossier
+}
+
 enum TypeCodeTemporaire {
   modification_mot_de_passe
   modification_infos
@@ -43,6 +55,36 @@ enum TypeCodeTemporaire {
 enum TypeUtilisateur {
   etudiant
   personnel
+}
+
+enum StatusPieceJointe {
+  EN_COURS_DE_VERIFICATION
+  A_CHANGER
+  VALIDE
+}
+
+enum TypePieceJointe {
+  PHOTO_PROFIL
+  ATTESTATION
+  DIPLOME_BAC
+  RELEVE_NOTES_BAC
+  DIPLOME_LICENCE
+  DIPLOME_MASTER
+  DIPLOME_DOCTORAT
+  PASSEPORT
+  CARTE_IDENTITE
+  BULLETIN_NOTES_LICENCE_1
+  BULLETIN_NOTES_LICENCE_2
+  BULLETIN_NOTES_LICENCE_3
+  BULLETIN_NOTES_MASTER_1
+  BULLETIN_NOTES_MASTER_2
+  BULLETIN_NOTES_DOCTORAT
+  LETTRE_MOTIVATION
+  CV
+  BULLETIN_NOTES_SECONDE
+  BULLETIN_NOTES_PREMIERE
+  BULLETIN_NOTES_TERMINALE
+  AUTRE
 }
 
 enum Role {
@@ -93,10 +135,11 @@ model dossier {
   conseiller_admission    personnel? @relation("ConseillerAdmissionDossiers", fields: [conseiller_admission_id], references: [id])
   conseiller_visa_id      Int?
   conseiller_visa         personnel?    @relation("ConseillerVisaDossiers", fields: [conseiller_visa_id], references: [id])
-  status                  StatusDossier @default(EN_COURS_D_ETUDE)
+  status                  StatusDossier @default(non_demarre)
   status_admission        StatusAdmission?
   status_visa             StatusVisa?
   infos_dossier           infos_dossier?
+  pieces_jointes          piece_jointe[]
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 }
@@ -112,6 +155,26 @@ model infos_dossier {
   status          StatusInfosDossier @default(EN_ATTENTE)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+}
+
+model piece_jointe {
+  id            Int                @id @default(autoincrement())
+  nom           String             @unique
+  codeDossier   String
+  dossier       dossier            @relation(fields: [codeDossier], references: [code_dossier], onDelete: Cascade)
+  type          TypePieceJointe
+  status        StatusPieceJointe  @default(EN_COURS_DE_VERIFICATION)
+  date_creation DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model notification {
+  id            Int              @id @default(autoincrement())
+  type          TypeNotification
+  message       String
+  destination   String
+  lu            Boolean          @default(false)
+  date_creation DateTime         @default(now())
 }
 
 model code_temporaire {

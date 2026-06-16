@@ -21,9 +21,10 @@ export const updateSelf = async (req: EtudiantRequest, res: Response) => {
     if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
     if (etudiant.bloque) return res.status(403).json({ message: 'Compte bloqué' });
 
-    const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, mdp } = req.body as {
+    const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, mdp, mdp_actuel } = req.body as {
       nom?: string; prenom?: string; sexe?: string; ville?: string;
-      payes?: string; date_de_naissance?: string; lieu_de_naissance?: string; mdp?: string;
+      payes?: string; date_de_naissance?: string; lieu_de_naissance?: string;
+      mdp?: string; mdp_actuel?: string;
     };
 
     const data: Record<string, unknown> = {};
@@ -34,7 +35,20 @@ export const updateSelf = async (req: EtudiantRequest, res: Response) => {
     if (payes) data.payes = payes;
     if (lieu_de_naissance) data.lieu_de_naissance = lieu_de_naissance;
     if (date_de_naissance) data.date_de_naissance = new Date(date_de_naissance);
-    if (mdp) data.mdp = await bcrypt.hash(mdp, 10);
+
+    if (mdp) {
+      if (!mdp_actuel) {
+        return res.status(400).json({ message: 'mdp_actuel est requis pour changer le mot de passe' });
+      }
+      const isMatch = await bcrypt.compare(mdp_actuel, etudiant.mdp);
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
+      }
+      if (mdp.length < 6) {
+        return res.status(400).json({ message: 'Le nouveau mot de passe doit contenir au moins 6 caractères' });
+      }
+      data.mdp = await bcrypt.hash(mdp, 10);
+    }
 
     const updated = await prisma.etudiant.update({ where: { id }, data, select: SAFE_SELECT });
     return res.status(200).json({ message: 'Profil mis à jour', etudiant: updated });

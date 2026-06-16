@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { sendMail } from '../lib/mailer.js';
+import { envoyerNotification } from '../lib/notificationService.js';
 
 export const envoyerMail = async (req: Request, res: Response) => {
   try {
@@ -23,6 +24,8 @@ export const envoyerMail = async (req: Request, res: Response) => {
       subject: sujet ?? 'Message de CapAdmis',
       message,
     });
+
+    envoyerNotification('message_recu', email).catch(console.error);
 
     return res.status(200).json({ message: 'Email envoyé avec succès' });
   } catch (error) {
