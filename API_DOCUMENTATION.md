@@ -631,7 +631,145 @@ Modifier les informations d'un dossier.
 
 ---
 
-## 📊 Énumérations
+## � Codes Temporaires
+
+Mécanisme unique de sécurisation des opérations sensibles pour **étudiants et personnel** (admin, superadmin, conseillers).
+
+> **Aucun token JWT requis** sur ces routes — le code temporaire reçu par email sert d'authentification.
+
+### Flux de fonctionnement
+
+```
+1. L'utilisateur demande un code  →  POST /api/codes-temporaires/generer
+2. Le système génère un code 6 chiffres valable 15 min et l'envoie par email
+3. L'utilisateur reçoit le code par email
+4. L'utilisateur valide ou utilise directement le code
+5. Après utilisation, le code est marqué comme utilisé (ne peut pas être réutilisé)
+```
+
+---
+
+### `POST /api/codes-temporaires/generer`
+Génère et envoie un code temporaire par email.
+
+**Auth :** Aucune
+
+**Body :**
+```json
+{
+  "email": "moussa@example.com",
+  "type": "modification_mot_de_passe"
+}
+```
+
+`type` : `"modification_mot_de_passe"` ou `"modification_infos"`
+
+> Fonctionne pour les étudiants **et** le personnel (admin, superadmin, conseillers).
+
+**Réponse `200` :**
+```json
+{ "message": "Code envoyé à moussa@example.com. Valable 15 minutes." }
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | Champs manquants ou type invalide |
+| `404` | Aucun compte associé à cet email |
+
+---
+
+### `POST /api/codes-temporaires/valider`
+Vérifie qu'un code est valide et non expiré (sans l'utiliser).
+
+**Auth :** Aucune
+
+**Body :**
+```json
+{
+  "email": "moussa@example.com",
+  "code": "482931",
+  "type": "modification_mot_de_passe"
+}
+```
+
+**Réponse `200` :**
+```json
+{ "message": "Code valide" }
+```
+
+**Réponse `400` :**
+```json
+{ "message": "Code invalide ou expiré" }
+```
+
+---
+
+### `POST /api/codes-temporaires/modifier-mot-de-passe`
+Modifie le mot de passe après validation du code temporaire.
+
+**Auth :** Aucune (le code valide l'identité)
+
+**Body :**
+```json
+{
+  "email": "moussa@example.com",
+  "code": "482931",
+  "nouveau_mdp": "nouveaumotdepasse"
+}
+```
+
+> Le `nouveau_mdp` doit contenir au moins 6 caractères.
+
+**Réponse `200` :**
+```json
+{ "message": "Mot de passe modifié avec succès" }
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | Champs manquants, mot de passe trop court, code invalide/expiré/déjà utilisé |
+
+---
+
+### `POST /api/codes-temporaires/modifier-infos`
+Modifie les informations personnelles après validation du code temporaire.
+
+**Auth :** Aucune (le code valide l'identité)
+
+**Body :**
+```json
+{
+  "email": "moussa@example.com",
+  "code": "482931",
+  "nom": "Nouveau nom",
+  "prenom": "Nouveau prénom",
+  "ville": "Thiès",
+  "payes": "Sénégal",
+  "sexe": "M",
+  "date_de_naissance": "2000-05-15",
+  "lieu_de_naissance": "Thiès"
+}
+```
+
+> Tous les champs de modification sont **optionnels**, au moins un est requis.
+> Pour le **personnel**, seuls `nom` et `prenom` sont modifiables via cette route.
+
+**Réponse `200` :**
+```json
+{ "message": "Informations mises à jour avec succès" }
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | Code invalide/expiré/déjà utilisé, aucun champ fourni |
+| `404` | Utilisateur introuvable |
+
+---
+
+## � Énumérations
 
 ### `Role` (personnel)
 | Valeur | Description |
@@ -669,6 +807,18 @@ Modifier les informations d'un dossier.
 | `VALIDE` | Infos validées |
 | `INVALIDE` | Infos invalides / à corriger |
 
+### `TypeCodeTemporaire`
+| Valeur | Signification |
+|---|---|
+| `modification_mot_de_passe` | Code pour réinitialiser le mot de passe |
+| `modification_infos` | Code pour modifier les informations personnelles |
+
+### `TypeUtilisateur` (interne)
+| Valeur | Signification |
+|---|---|
+| `etudiant` | L'utilisateur est un étudiant |
+| `personnel` | L'utilisateur est un membre du personnel |
+
 ---
 
 ## 🔒 Matrice des permissions
@@ -686,6 +836,9 @@ Modifier les informations d'un dossier.
 | Modifier status dossier | ❌ | ✅ *(son champ uniquement, si assigné)* | ✅ | ✅ |
 | Lister tout le personnel | ❌ | ❌ | ❌ | ✅ |
 | Lister les conseillers | ❌ | ❌ | ✅ | ✅ |
+| Demander un code temporaire | ✅ | ✅ | ✅ | ✅ |
+| Modifier mdp via code temporaire | ✅ | ✅ | ✅ | ✅ |
+| Modifier infos via code temporaire | ✅ | ✅ *(nom, prenom)* | ✅ *(nom, prenom)* | ✅ *(nom, prenom)* |
 
 ---
 

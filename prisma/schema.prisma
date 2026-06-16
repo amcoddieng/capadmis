@@ -35,6 +35,16 @@ enum StatusInfosDossier {
   INVALIDE
 }
 
+enum TypeCodeTemporaire {
+  modification_mot_de_passe
+  modification_infos
+}
+
+enum TypeUtilisateur {
+  etudiant
+  personnel
+}
+
 enum Role {
   superadmin
   admin
@@ -102,4 +112,15 @@ model infos_dossier {
   status          StatusInfosDossier @default(EN_ATTENTE)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+}
+
+model code_temporaire {
+  id               Int                @id @default(autoincrement())
+  type             TypeCodeTemporaire
+  code             String
+  date_expiration  DateTime
+  utilisateur      String
+  type_utilisateur TypeUtilisateur
+  utilise          Boolean            @default(false)
+  date_creation    DateTime           @default(now())
 }

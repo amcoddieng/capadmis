@@ -146,6 +146,51 @@ export const bloquerEtudiant = async (req: Request, res: Response) => {
   }
 };
 
+export const monProfil = async (req: EtudiantRequest, res: Response) => {
+  try {
+    const id = req.etudiant?.id;
+    if (!id) return res.status(401).json({ message: 'Non authentifié' });
+
+    const etudiant = await prisma.etudiant.findUnique({
+      where: { id },
+      select: {
+        ...SAFE_SELECT,
+        dossier: {
+          select: {
+            id: true,
+            code_dossier: true,
+            status: true,
+            status_admission: true,
+            status_visa: true,
+            conseiller_admission: { select: { id: true, prenom: true, nom: true, code: true, email: true } },
+            conseiller_visa: { select: { id: true, prenom: true, nom: true, code: true, email: true } },
+            infos_dossier: {
+              select: {
+                id: true,
+                niveau_etude: true,
+                pays_souhaite: true,
+                filieres: true,
+                nombre_fois_bac: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
+    return res.status(200).json({ etudiant });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
 export const listerEtudiants = async (_req: PersonnelRequest, res: Response) => {
   try {
     const etudiants = await prisma.etudiant.findMany({ select: SAFE_SELECT, orderBy: { createdAt: 'desc' } });
