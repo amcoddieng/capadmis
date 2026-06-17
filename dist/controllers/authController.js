@@ -1,9 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
+import prisma from '../lib/prisma.js';
+import { generateUniqueDossierCode } from './dossierController.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
 export const register = async (req, res) => {
     try {
@@ -28,6 +26,11 @@ export const register = async (req, res) => {
                 lieu_de_naissance
             }
         });
+        const code_dossier = await generateUniqueDossierCode();
+        const dossier = await prisma.dossier.create({
+            data: { code_dossier, etudiant_id: etudiant.id },
+            select: { id: true, code_dossier: true },
+        });
         const token = jwt.sign({ id: etudiant.id, email: etudiant.email }, JWT_SECRET, { expiresIn: '24h' });
         return res.status(201).json({
             message: 'Étudiant créé avec succès',
@@ -37,7 +40,8 @@ export const register = async (req, res) => {
                 nom: etudiant.nom,
                 prenom: etudiant.prenom,
                 email: etudiant.email
-            }
+            },
+            dossier: { id: dossier.id, code_dossier: dossier.code_dossier },
         });
     }
     catch (error) {
@@ -53,6 +57,9 @@ export const login = async (req, res) => {
         });
         if (!etudiant) {
             return res.status(400).json({ message: 'Email ou mot de passe incorrect' });
+        }
+        if (etudiant.bloque) {
+            return res.status(403).json({ message: 'Votre compte est bloqué' });
         }
         const isMatch = await bcrypt.compare(mdp, etudiant.mdp);
         if (!isMatch) {
