@@ -44,10 +44,10 @@ export function initSocketServer(httpServer: HttpServer): Server {
   return io;
 }
 
-export function emitToUser(email: string, data: unknown): void {
+export function emitToUser(email: string, event: string, data: unknown): void {
   if (!ioInstance) return;
   const socketId = connectedUsers.get(email);
   if (socketId) {
-    ioInstance.to(socketId).emit('notification', data);
+    ioInstance.to(socketId).emit(event, data);
   }
 }

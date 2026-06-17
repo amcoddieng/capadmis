@@ -184,7 +184,7 @@ export async function envoyerNotification(
   const message = MESSAGES[type];
   const notif = await prisma.notification.create({ data: { type, message, destination } });
 
-  emitToUser(destination, {
+  emitToUser(destination, 'notification', {
     id: notif.id,
     type: notif.type,
     message: notif.message,

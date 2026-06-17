@@ -2,13 +2,14 @@ import { Request, Response } from 'express';
 import { StatusDossier, StatusAdmission, StatusVisa } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { EtudiantRequest } from '../middleware/etudiantMiddleware.js';
+import { PersonnelRequest } from '../middleware/personnelMiddleware.js';
 import { envoyerNotification } from '../lib/notificationService.js';
 
 const DOSSIER_SELECT = {
   id: true,
   code_dossier: true,
   etudiant_id: true,
-  etudiant: { select: { id: true, nom: true, prenom: true, email: true } },
+  etudiant: { select: { id: true, nom: true, prenom: true, email: true, ville: true, payes: true, lieu_de_naissance: true, date_de_naissance: true } },
   conseiller_admission_id: true,
   conseiller_admission: { select: { id: true, nom: true, prenom: true, code: true } },
   conseiller_visa_id: true,
@@ -70,6 +71,24 @@ export const monDossier = async (req: EtudiantRequest, res: Response) => {
 
     if (!dossier) return res.status(404).json({ message: 'Aucun dossier trouvé' });
     return res.status(200).json({ dossier });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+export const mesDossiersConseiller = async (req: PersonnelRequest, res: Response) => {
+  try {
+    const id = req.personnel?.id;
+    if (!id) return res.status(401).json({ message: 'Non authentifié' });
+
+    const dossiers = await prisma.dossier.findMany({
+      where: { OR: [{ conseiller_admission_id: id }, { conseiller_visa_id: id }] },
+      select: DOSSIER_SELECT,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return res.status(200).json({ dossiers });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Erreur serveur' });

@@ -25,6 +25,7 @@ enum StatusAdmission {
 }
 
 enum StatusVisa {
+  NON_DEMARRER
   DEMANDE_VISA_EN_COURS
   DEMANDE_VISA_VALIDE
   DEMANDE_VISA_INVALIDE
@@ -94,6 +95,12 @@ enum Role {
   conseiller_admission
 }
 
+enum StatutDossierUniversite {
+  accepte
+  refuse
+  en_attente
+}
+
 model personnel {
   id        Int      @id @default(autoincrement())
   prenom    String
@@ -140,6 +147,7 @@ model dossier {
   status_visa             StatusVisa?
   infos_dossier           infos_dossier?
   pieces_jointes          piece_jointe[]
+  dossiers_universite     dossier_universite[]
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 }
@@ -186,4 +194,29 @@ model code_temporaire {
   type_utilisateur TypeUtilisateur
   utilise          Boolean            @default(false)
   date_creation    DateTime           @default(now())
+}
+
+model message {
+  id            Int      @id @default(autoincrement())
+  contenu       String?
+  expediteur    String
+  destinataire  String
+  vu            Boolean  @default(false)
+  date_creation DateTime @default(now())
+}
+
+model dossier_universite {
+  id                 Int                     @id @default(autoincrement())
+  code_dossier       String
+  dossier            dossier                 @relation(fields: [code_dossier], references: [code_dossier], onDelete: Cascade)
+  filiere            String
+  universite         String
+  pays               String
+  ville              String
+  region             String
+  statut             StatutDossierUniversite @default(en_attente)
+  message_universite String?
+  date_depot         DateTime                @default(now())
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
 }

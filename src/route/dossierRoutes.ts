@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   creerDossier,
   monDossier,
+  mesDossiersConseiller,
   listerDossiers,
   getDossierById,
   assignerConseiller,
@@ -13,6 +14,7 @@ import { verifyPersonnelToken, requireSuperAdminOrAdmin } from '../middleware/pe
 const router = Router();
 
 router.get('/moi', verifyEtudiantToken, monDossier);
+router.get('/mes-dossiers', verifyPersonnelToken, mesDossiersConseiller);
 router.get('/', verifyPersonnelToken, requireSuperAdminOrAdmin, listerDossiers);
 router.get('/:id', verifyPersonnelToken, requireSuperAdminOrAdmin, getDossierById);
 router.post('/', verifyPersonnelToken, requireSuperAdminOrAdmin, creerDossier);
