@@ -11,6 +11,7 @@ import pieceJointeRoutes from './route/pieceJointeRoutes.js';
 import notificationRoutes from './route/notificationRoutes.js';
 import messageRoutes from './route/messageRoutes.js';
 import dossierUniversiteRoutes from './route/dossierUniversiteRoutes.js';
+import dashboardRoutes from './route/dashboardRoutes.js';
 const app = express();
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', 'https://capadmis.netlify.app');
@@ -35,5 +36,6 @@ app.use('/api/pieces-jointes', pieceJointeRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/dossiers-universite', dossierUniversiteRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 export default app;
 //# sourceMappingURL=app.js.map
