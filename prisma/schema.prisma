@@ -220,3 +220,12 @@ model dossier_universite {
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
 }
+
+model refresh_token {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  user_type String
+  user_id   Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

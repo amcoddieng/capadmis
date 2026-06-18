@@ -58,7 +58,7 @@ export const mesConversations = async (req: HybridRequest, res: Response) => {
     const seen = new Set<string>();
     const conversations: {
       interlocuteur: string;
-      dernier_message: string;
+      dernier_message: string | null;
       date: Date;
       non_lus: number;
     }[] = [];

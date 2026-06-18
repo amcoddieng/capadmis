@@ -6,18 +6,52 @@ Base URL : `http://localhost:3000/api`
 
 ## 🔐 Authentification
 
-Les routes protégées nécessitent un token JWT dans le header HTTP :
+Le système utilise un **double token** (Access Token + Refresh Token) pour la sécurité :
 
-```
-Authorization: Bearer <token>
-```
+- **Access Token** : JWT court (15 min), envoyé dans le body JSON. Le frontend doit le stocker en mémoire et l'envoyer dans chaque requête :
+  ```
+  Authorization: Bearer <accessToken>
+  ```
+- **Refresh Token** : JWT long (7 jours), stocké dans un **cookie HttpOnly Secure SameSite**. Le frontend n'y a jamais accès.
 
 ### Types de tokens
 
-| Token | Obtenu via | Contenu |
-|---|---|---|
-| **Token étudiant** | `POST /auth/register` ou `POST /auth/login` | `{ id, email }` |
-| **Token personnel** | `POST /personnel/login` | `{ id, email, role, code }` |
+| Token | Obtenu via | Durée | Stockage |
+|---|---|---|---|
+| **Access Token étudiant** | `POST /auth/register`, `POST /auth/login` | 15 min | JSON body |
+| **Access Token personnel** | `POST /personnel/login` | 15 min | JSON body |
+| **Refresh Token** | Mêmes routes (cookie) | 7 jours | Cookie HttpOnly |
+
+### Rafraîchir un access token
+
+Quand l'access token expire (`403`), appeler `POST /api/auth/refresh` (envoie automatiquement le cookie). Le serveur retourne un nouvel access token.
+
+### Déconnexion
+
+Appeler `POST /api/auth/logout` — le serveur révoque le refresh token en DB et supprime le cookie.
+
+### Côté frontend (React)
+
+```javascript
+// Axios : inclure credentials pour envoyer les cookies
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+// Intercepteur 403 → refresh automatique
+axios.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const original = err.config;
+    if (err.response?.status === 403 && !original._retry) {
+      original._retry = true;
+      const { data } = await axios.post('/api/auth/refresh');
+      axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
+      return axios(original);
+    }
+    return Promise.reject(err);
+  }
+);
+```
 
 ---
 
@@ -47,11 +81,13 @@ Inscription d'un étudiant. Crée automatiquement un dossier.
 ```json
 {
   "message": "Étudiant créé avec succès",
-  "token": "<jwt>",
+  "accessToken": "<jwt_access>",
   "etudiant": { "id": 1, "nom": "Diallo", "prenom": "Moussa", "email": "moussa@example.com" },
   "dossier": { "id": 1, "code_dossier": "87654321" }
 }
 ```
+
+> Le `refresh_token` est automatiquement envoyé dans un cookie HttpOnly par le serveur.
 
 **Erreurs :**
 | Code | Cause |
@@ -78,16 +114,55 @@ Connexion d'un étudiant.
 ```json
 {
   "message": "Connexion réussie",
-  "token": "<jwt>",
+  "accessToken": "<jwt_access>",
   "etudiant": { "id": 1, "nom": "Diallo", "prenom": "Moussa", "email": "moussa@example.com" }
 }
 ```
+
+> Le cookie `refresh_token` est renouvelé (les anciens refresh tokens de l'utilisateur sont révoqués).
 
 **Erreurs :**
 | Code | Cause |
 |---|---|
 | `400` | Email ou mot de passe incorrect |
 | `403` | Compte bloqué |
+
+---
+
+### `POST /api/auth/refresh`
+Génère un nouvel **access token** à partir du **refresh token** stocké dans le cookie.
+
+**Auth :** Aucune (le cookie fait foi)
+
+> Le frontend doit envoyer cette requête avec `withCredentials: true` (Axios) ou `credentials: 'include'` (Fetch).
+
+**Réponse `200` :**
+```json
+{
+  "accessToken": "<nouveau_jwt_access>",
+  "userType": "etudiant"
+}
+```
+
+`userType` : `"etudiant"` ou `"personnel"`
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `401` | Cookie `refresh_token` manquant |
+| `403` | Refresh token invalide, expiré, ou compte bloqué |
+
+---
+
+### `POST /api/auth/logout`
+Déconnecte l'utilisateur en révoquant le refresh token et en supprimant le cookie.
+
+**Auth :** Aucune (le cookie fait foi)
+
+**Réponse `200` :**
+```json
+{ "message": "Déconnexion réussie" }
+```
 
 ---
 
@@ -142,10 +217,12 @@ Connexion d'un membre du personnel (superadmin, admin, conseiller).
 ```json
 {
   "message": "Connexion réussie",
-  "token": "<jwt>",
+  "accessToken": "<jwt_access>",
   "personnel": { "id": 1, "prenom": "Admin", "nom": "Principal", "code": "AB12CD", "email": "admin@capadmis.com", "role": "admin", "bloque": false }
 }
 ```
+
+> Le cookie `refresh_token` est renouvelé (les anciens refresh tokens de l'utilisateur sont révoqués).
 
 **Erreurs :**
 | Code | Cause |

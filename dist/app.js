@@ -1,4 +1,5 @@
 import express, { json } from 'express';
+import cookieParser from 'cookie-parser';
 import authRoutes from './route/authRoutes.js';
 import personnelRoutes from './route/personnelRoutes.js';
 import etudiantRoutes from './route/etudiantRoutes.js';
@@ -11,17 +12,18 @@ import notificationRoutes from './route/notificationRoutes.js';
 import messageRoutes from './route/messageRoutes.js';
 import dossierUniversiteRoutes from './route/dossierUniversiteRoutes.js';
 const app = express();
-
-// autoriser "https://capadmis.netlify.app",
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://capadmis.netlify.app');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
+    res.header('Access-Control-Allow-Origin', 'https://capadmis.netlify.app');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
 });
-
-
 app.use(json());
+app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/personnel', personnelRoutes);
 app.use('/api/etudiants', etudiantRoutes);

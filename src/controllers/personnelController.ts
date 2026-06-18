@@ -3,6 +3,13 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
 import { Role } from '@prisma/client';
+import {
+  generateAccessToken,
+  createRefreshToken,
+  setRefreshTokenCookie,
+  clearRefreshTokenCookie,
+  revokeAllUserRefreshTokens,
+} from '../lib/tokenService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
 
@@ -172,15 +179,17 @@ export const loginPersonnel = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
 
-    const token = jwt.sign(
-      { id: personnel.id, email: personnel.email, role: personnel.role, code: personnel.code },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    await revokeAllUserRefreshTokens(personnel.id, 'personnel');
+
+    const accessToken = generateAccessToken({
+      id: personnel.id, email: personnel.email, role: personnel.role, code: personnel.code,
+    });
+    const refreshToken = await createRefreshToken(personnel.id, 'personnel');
+    setRefreshTokenCookie(res, refreshToken);
 
     return res.status(200).json({
       message: 'Connexion réussie',
-      token,
+      accessToken,
       personnel: {
         id: personnel.id,
         prenom: personnel.prenom,

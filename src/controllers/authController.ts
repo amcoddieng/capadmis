@@ -1,10 +1,14 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
 import { generateUniqueDossierCode } from './dossierController.js';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
+import {
+  generateAccessToken,
+  createRefreshToken,
+  setRefreshTokenCookie,
+  clearRefreshTokenCookie,
+  revokeAllUserRefreshTokens,
+} from '../lib/tokenService.js';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -40,15 +44,13 @@ export const register = async (req: Request, res: Response) => {
       select: { id: true, code_dossier: true },
     });
 
-    const token = jwt.sign(
-      { id: etudiant.id, email: etudiant.email },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    const accessToken = generateAccessToken({ id: etudiant.id, email: etudiant.email });
+    const refreshToken = await createRefreshToken(etudiant.id, 'etudiant');
+    setRefreshTokenCookie(res, refreshToken);
 
     return res.status(201).json({
       message: 'Étudiant créé avec succès',
-      token,
+      accessToken,
       etudiant: {
         id: etudiant.id,
         nom: etudiant.nom,
@@ -85,15 +87,15 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Email ou mot de passe incorrect' });
     }
 
-    const token = jwt.sign(
-      { id: etudiant.id, email: etudiant.email },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    await revokeAllUserRefreshTokens(etudiant.id, 'etudiant');
+
+    const accessToken = generateAccessToken({ id: etudiant.id, email: etudiant.email });
+    const refreshToken = await createRefreshToken(etudiant.id, 'etudiant');
+    setRefreshTokenCookie(res, refreshToken);
 
     return res.status(200).json({
       message: 'Connexion réussie',
-      token,
+      accessToken,
       etudiant: {
         id: etudiant.id,
         nom: etudiant.nom,
