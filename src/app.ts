@@ -16,7 +16,7 @@ import whatsappRoutes from './route/whatsappRoutes.js';
 
 const app = express();
 // accepter les requêtes depuis le frontend http://localhost:5173 et https://capadmis.netlify.app
-const allowedOrigins = ['http://localhost:5173', 'https://capadmis.netlify.app'];
+const allowedOrigins = ['https://capadmis.netlify.app'];
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;

@@ -5,6 +5,7 @@ const SAFE_SELECT = {
     id: true, nom: true, prenom: true, email: true,
     sexe: true, ville: true, payes: true,
     date_de_naissance: true, lieu_de_naissance: true,
+    telephone: true,
     bloque: true, createdAt: true, updatedAt: true,
 };
 export const updateSelf = async (req, res) => {
@@ -17,7 +18,7 @@ export const updateSelf = async (req, res) => {
             return res.status(404).json({ message: 'Étudiant introuvable' });
         if (etudiant.bloque)
             return res.status(403).json({ message: 'Compte bloqué' });
-        const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, mdp, mdp_actuel } = req.body;
+        const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, mdp, mdp_actuel } = req.body;
         const data = {};
         if (nom)
             data.nom = nom;
@@ -33,6 +34,8 @@ export const updateSelf = async (req, res) => {
             data.lieu_de_naissance = lieu_de_naissance;
         if (date_de_naissance)
             data.date_de_naissance = new Date(date_de_naissance);
+        if (telephone)
+            data.telephone = telephone;
         if (mdp) {
             if (!mdp_actuel) {
                 return res.status(400).json({ message: 'mdp_actuel est requis pour changer le mot de passe' });
@@ -88,7 +91,7 @@ export const updateEtudiantByAdmin = async (req, res) => {
         const etudiant = await prisma.etudiant.findUnique({ where: { id } });
         if (!etudiant)
             return res.status(404).json({ message: 'Étudiant introuvable' });
-        const { nom, prenom, email, sexe, ville, payes, date_de_naissance, lieu_de_naissance, mdp } = req.body;
+        const { nom, prenom, email, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, mdp } = req.body;
         const data = {};
         if (nom)
             data.nom = nom;
@@ -106,6 +109,8 @@ export const updateEtudiantByAdmin = async (req, res) => {
             data.lieu_de_naissance = lieu_de_naissance;
         if (date_de_naissance)
             data.date_de_naissance = new Date(date_de_naissance);
+        if (telephone)
+            data.telephone = telephone;
         if (mdp)
             data.mdp = await bcrypt.hash(mdp, 10);
         const updated = await prisma.etudiant.update({ where: { id }, data, select: SAFE_SELECT });

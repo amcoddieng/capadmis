@@ -209,8 +209,12 @@ export const assignerConseiller = async (req, res) => {
         const dossier = await prisma.dossier.findUnique({ where: { id } });
         if (!dossier)
             return res.status(404).json({ message: 'Dossier introuvable' });
+        const estPremiereAssignationAdmission = type === 'admission' && !dossier.conseiller_admission_id;
         const data = type === 'admission'
-            ? { conseiller_admission_id: Number(conseiller_id) }
+            ? {
+                conseiller_admission_id: Number(conseiller_id),
+                ...(estPremiereAssignationAdmission ? { status: 'EN_COURS_D_ETUDE' } : {}),
+            }
             : { conseiller_visa_id: Number(conseiller_id) };
         const updated = await prisma.dossier.update({ where: { id }, data, select: DOSSIER_SELECT });
         const etudiant = updated.etudiant;

@@ -1,14 +1,16 @@
 import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.ionos.fr',
+    port: 587,
+    secure: false,
     auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
+        user: process.env.IONOS_USER,
+        pass: process.env.IONOS_PASSWORD,
     },
 });
 export async function sendMail({ to, subject, message, html }) {
     await transporter.sendMail({
-        from: `"CapAdmis" <${process.env.GMAIL_USER}>`,
+        from: `"CapAdmis" <${process.env.IONOS_USER}>`,
         to,
         subject,
         text: message ?? '',

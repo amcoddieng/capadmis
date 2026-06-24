@@ -4,14 +4,20 @@ import { generateUniqueDossierCode } from './dossierController.js';
 import { generateAccessToken, createRefreshToken, setRefreshTokenCookie, revokeAllUserRefreshTokens, } from '../lib/tokenService.js';
 export const register = async (req, res) => {
     try {
-        const { nom, prenom, email, mdp, sexe, ville, payes, date_de_naissance, lieu_de_naissance } = req.body;
-        const existingEtudiant = await prisma.etudiant.findUnique({
-            where: { email }
-        });
+        const { nom, prenom, email, mdp, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone } = req.body;
+        if (!telephone) {
+            return res.status(400).json({ message: 'Le numéro de téléphone est requis' });
+        }
+        const existingEtudiant = await prisma.etudiant.findUnique({ where: { email } });
         if (existingEtudiant) {
             return res.status(400).json({ message: 'Cet email est déjà utilisé' });
         }
+        const existingTelephone = await prisma.etudiant.findUnique({ where: { telephone } });
+        if (existingTelephone) {
+            return res.status(400).json({ message: 'Ce numéro de téléphone est déjà utilisé' });
+        }
         const hashedPassword = await bcrypt.hash(mdp, 10);
+        //  dogeolh
         const etudiant = await prisma.etudiant.create({
             data: {
                 nom,
@@ -22,7 +28,8 @@ export const register = async (req, res) => {
                 ville,
                 payes,
                 date_de_naissance: new Date(date_de_naissance),
-                lieu_de_naissance
+                lieu_de_naissance,
+                telephone
             }
         });
         const code_dossier = await generateUniqueDossierCode();
