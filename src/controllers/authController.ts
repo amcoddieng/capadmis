@@ -29,7 +29,7 @@ export const register = async (req: Request, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(mdp, 10);
-
+//  dogeolh
     const etudiant = await prisma.etudiant.create({
       data: {
         nom,
