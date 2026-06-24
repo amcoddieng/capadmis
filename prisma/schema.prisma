@@ -127,6 +127,7 @@ model etudiant {
   payes             String
   date_de_naissance DateTime
   lieu_de_naissance String
+  telephone         String?  @unique
   bloque            Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

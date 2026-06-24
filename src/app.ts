@@ -12,6 +12,7 @@ import notificationRoutes from './route/notificationRoutes.js';
 import messageRoutes from './route/messageRoutes.js';
 import dossierUniversiteRoutes from './route/dossierUniversiteRoutes.js';
 import dashboardRoutes from './route/dashboardRoutes.js';
+import whatsappRoutes from './route/whatsappRoutes.js';
 
 const app = express();
 // accepter les requêtes depuis le frontend http://localhost:5173 et https://capadmis.netlify.app
@@ -45,5 +46,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/dossiers-universite', dossierUniversiteRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 export default app;

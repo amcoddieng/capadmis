@@ -9,6 +9,7 @@ const SAFE_SELECT = {
   id: true, nom: true, prenom: true, email: true,
   sexe: true, ville: true, payes: true,
   date_de_naissance: true, lieu_de_naissance: true,
+  telephone: true,
   bloque: true, createdAt: true, updatedAt: true,
 } as const;
 
@@ -21,10 +22,10 @@ export const updateSelf = async (req: EtudiantRequest, res: Response) => {
     if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
     if (etudiant.bloque) return res.status(403).json({ message: 'Compte bloqué' });
 
-    const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, mdp, mdp_actuel } = req.body as {
+    const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, mdp, mdp_actuel } = req.body as {
       nom?: string; prenom?: string; sexe?: string; ville?: string;
       payes?: string; date_de_naissance?: string; lieu_de_naissance?: string;
-      mdp?: string; mdp_actuel?: string;
+      telephone?: string; mdp?: string; mdp_actuel?: string;
     };
 
     const data: Record<string, unknown> = {};
@@ -35,6 +36,7 @@ export const updateSelf = async (req: EtudiantRequest, res: Response) => {
     if (payes) data.payes = payes;
     if (lieu_de_naissance) data.lieu_de_naissance = lieu_de_naissance;
     if (date_de_naissance) data.date_de_naissance = new Date(date_de_naissance);
+    if (telephone) data.telephone = telephone;
 
     if (mdp) {
       if (!mdp_actuel) {
@@ -99,9 +101,9 @@ export const updateEtudiantByAdmin = async (req: Request, res: Response) => {
     const etudiant = await prisma.etudiant.findUnique({ where: { id } });
     if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
 
-    const { nom, prenom, email, sexe, ville, payes, date_de_naissance, lieu_de_naissance, mdp } = req.body as {
+    const { nom, prenom, email, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, mdp } = req.body as {
       nom?: string; prenom?: string; email?: string; sexe?: string; ville?: string;
-      payes?: string; date_de_naissance?: string; lieu_de_naissance?: string; mdp?: string;
+      payes?: string; date_de_naissance?: string; lieu_de_naissance?: string; telephone?: string; mdp?: string;
     };
 
     const data: Record<string, unknown> = {};
@@ -113,6 +115,7 @@ export const updateEtudiantByAdmin = async (req: Request, res: Response) => {
     if (payes) data.payes = payes;
     if (lieu_de_naissance) data.lieu_de_naissance = lieu_de_naissance;
     if (date_de_naissance) data.date_de_naissance = new Date(date_de_naissance);
+    if (telephone) data.telephone = telephone;
     if (mdp) data.mdp = await bcrypt.hash(mdp, 10);
 
     const updated = await prisma.etudiant.update({ where: { id }, data, select: SAFE_SELECT });

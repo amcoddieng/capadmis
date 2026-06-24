@@ -73,7 +73,8 @@ Inscription d'un étudiant. Crée automatiquement un dossier.
   "ville": "Dakar",
   "payes": "Sénégal",
   "date_de_naissance": "2000-05-15",
-  "lieu_de_naissance": "Dakar"
+  "lieu_de_naissance": "Dakar",
+  "telephone": "221771234567"
 }
 ```
 
@@ -92,7 +93,7 @@ Inscription d'un étudiant. Crée automatiquement un dossier.
 **Erreurs :**
 | Code | Cause |
 |---|---|
-| `400` | Email déjà utilisé |
+| `400` | Téléphone manquant, email ou téléphone déjà utilisé |
 | `500` | Erreur serveur |
 
 ---
@@ -369,7 +370,7 @@ Lister tous les étudiants.
 ```json
 {
   "etudiants": [
-    { "id": 1, "nom": "Diallo", "prenom": "Moussa", "email": "moussa@example.com", "bloque": false, ... }
+    { "id": 1, "nom": "Diallo", "prenom": "Moussa", "email": "moussa@example.com", "telephone": "221771234567", "bloque": false, ... }
   ]
 }
 ```
@@ -394,6 +395,7 @@ L'étudiant connecté modifie son propre profil.
   "payes": "Sénégal",
   "date_de_naissance": "2000-01-01",
   "lieu_de_naissance": "Thiès",
+  "telephone": "221771234567",
   "mdp_actuel": "ancienmdp",
   "mdp": "nouveaumotdepasse"
 }
@@ -431,9 +433,12 @@ Créer un étudiant (par admin/superadmin). Crée automatiquement un dossier.
   "ville": "Ziguinchor",
   "payes": "Sénégal",
   "date_de_naissance": "1999-08-20",
-  "lieu_de_naissance": "Ziguinchor"
+  "lieu_de_naissance": "Ziguinchor",
+  "telephone": "221771234567"
 }
 ```
+
+> `telephone` est optionnel lors de la création par un admin.
 
 **Réponse `201` :**
 ```json
@@ -453,7 +458,7 @@ Modifier un étudiant.
 
 **Params :** `id`
 
-**Body :** *(tous optionnels — mêmes champs que la création)*
+**Body :** *(tous optionnels — mêmes champs que la création, dont `telephone`)*
 
 **Réponse `200` :**
 ```json
@@ -626,6 +631,8 @@ Assigner un conseiller à un dossier.
 `type` : `"admission"` ou `"visa"`
 
 > ⚠️ Le conseiller doit avoir le rôle correspondant au type (`conseiller_admission` ou `conseiller_visa`).
+
+> 💡 Lors de la **première assignation** d'un conseiller `admission`, le `status` du dossier passe automatiquement à `EN_COURS_D_ETUDE`.
 
 **Réponse `200` :**
 ```json
@@ -1280,7 +1287,8 @@ Modifie les informations personnelles après validation du code temporaire.
 ### `StatusDossier`
 | Valeur | Signification |
 |---|---|
-| `EN_COURS_D_ETUDE` | Dossier en cours de traitement *(défaut)* |
+| `non_demarre` | Aucun conseiller assigné *(défaut à la création)* |
+| `EN_COURS_D_ETUDE` | Automatiquement défini lors de la **première assignation** d'un conseiller admission |
 | `VALIDE` | Dossier validé |
 | `CHANGEMENT_A_APPORTER` | Des modifications sont requises |
 
@@ -1395,6 +1403,7 @@ Modifie les informations personnelles après validation du code temporaire.
 | Envoyer / recevoir des messages | ✅ | ✅ | ✅ | ✅ |
 | Créer / modifier / supprimer un dossier université | ❌ | ✅ *(si conseiller admission assigné)* | ✅ | ✅ |
 | Voir les dossiers université | ❌ | ✅ *(si assigné)* | ✅ | ✅ |
+| Envoyer un message WhatsApp | ❌ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -1678,6 +1687,44 @@ socket.on('message', (msg) => {
 
 ---
 
+## 📱 WhatsApp
+
+Envoi de messages WhatsApp via **WaAPI** (`waapi.app`). Nécessite une instance WaAPI active et connectée.
+
+### `POST /api/whatsapp/send`
+Envoyer un message WhatsApp à un numéro de téléphone.
+
+**Auth :** Token personnel — tout rôle
+
+**Body :**
+```json
+{
+  "telephone": "221771234567",
+  "message": "Bonjour, votre dossier est en cours de traitement."
+}
+```
+
+> Le numéro doit inclure l'indicatif pays sans le `+` (ex: `221771234567` pour le Sénégal).
+
+**Réponse `200` :**
+```json
+{ "message": "Message WhatsApp envoyé avec succès" }
+```
+
+**Erreurs :**
+| Code | Cause |
+|------|-------|
+| `400` | `telephone` ou `message` manquant |
+| `500` | Échec d'envoi (instance WaAPI non connectée, numéro invalide…) |
+
+> **Variables d'environnement requises :**
+> ```env
+> WAAPI_INSTANCE_ID=votre_instance_id
+> WAAPI_TOKEN=votre_api_token
+> ```
+
+---
+
 ## ⚠️ Codes d'erreur communs
 
 | Code HTTP | Signification |
@@ -1686,5 +1733,5 @@ socket.on('message', (msg) => {
 | `401` | Token absent |
 | `403` | Token invalide/expiré, compte bloqué, ou accès non autorisé |
 | `404` | Ressource introuvable |
-| `409` | Conflit (email déjà utilisé, dossier déjà existant…) |
+| `409` | Conflit (email ou téléphone déjà utilisé, dossier déjà existant…) |
 | `500` | Erreur interne du serveur |
