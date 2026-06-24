@@ -378,10 +378,11 @@ Lister tous les étudiants.
 ---
 
 ### `PUT /api/etudiants/me`
-L'étudiant connecté modifie son propre profil.
+L'étudiant connecté modifie son propre profil (informations personnelles, téléphone, mot de passe).
 
 **Auth :** Token étudiant
 
+> ✅ Aucun code temporaire requis — modification directe.
 > ⚠️ Ne peut pas modifier son email via cette route. Compte bloqué → `403`.
 > Pour changer le mot de passe, `mdp_actuel` est **obligatoire**.
 
@@ -967,29 +968,19 @@ Modifier les informations d'un dossier.
 
 **Params :** `code_dossier`
 
-**Body :** *(tous optionnels sauf `code_validation` pour les étudiants)*
+**Body :** *(tous optionnels)*
 ```json
 {
   "niveau_etude": "Master 1",
   "pays_souhaite": "Canada",
   "filieres": ["Intelligence Artificielle"],
   "nombre_fois_bac": 2,
-  "status": "VALIDE",
-  "code_validation": "482931"
+  "status": "VALIDE"
 }
 ```
 
 > ⚠️ Si l'appelant est un **étudiant** :
-> - `code_validation` est **obligatoire** — générez-le d'abord via `POST /api/codes-temporaires/generer` avec `type: "modification_infos"`
 > - Le `status` est automatiquement forcé à `EN_ATTENTE` quel que soit ce qui est envoyé
-> - Le code est **consommé** après utilisation (non réutilisable)
-
-**Flux étudiant :**
-```
-1. POST /api/codes-temporaires/generer  →  { email, type: "modification_infos" }
-2. Récupérer le code reçu par email
-3. PUT /api/infos-dossier/:code_dossier →  { ...modifications, code_validation: "482931" }
-```
 
 **Valeurs `status` (personnel uniquement) :** `EN_ATTENTE`, `VALIDE`, `INVALIDE`
 
@@ -1004,7 +995,7 @@ Modifier les informations d'un dossier.
 **Erreurs :**
 | Code | Cause |
 |---|---|
-| `400` | `code_validation` absent (étudiant), code invalide ou expiré |
+| `400` | Aucun champ fourni ou `status` invalide |
 
 ---
 
@@ -1241,20 +1232,18 @@ Modifie le mot de passe après validation du code temporaire.
 ### `POST /api/codes-temporaires/modifier-infos`
 Modifie les informations personnelles après validation du code temporaire.
 
+> 💡 **Pour les étudiants**, utiliser directement `PUT /api/etudiants/me` — aucun code requis.
+> Cette route est principalement utilisée par le **personnel** (admin, superadmin, conseillers) pour modifier leur nom/prénom.
+
 **Auth :** Aucune (le code valide l'identité)
 
 **Body :**
 ```json
 {
-  "email": "moussa@example.com",
+  "email": "conseiller@capadmis.com",
   "code": "482931",
   "nom": "Nouveau nom",
-  "prenom": "Nouveau prénom",
-  "ville": "Thiès",
-  "payes": "Sénégal",
-  "sexe": "M",
-  "date_de_naissance": "2000-05-15",
-  "lieu_de_naissance": "Thiès"
+  "prenom": "Nouveau prénom"
 }
 ```
 

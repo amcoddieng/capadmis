@@ -79,29 +79,7 @@ export const modifierInfosDossier = async (req, res) => {
         const { allowed, forceEnAttente, reason } = await resolveCallerAccess(req, code_dossier);
         if (!allowed)
             return res.status(403).json({ message: reason });
-        const { niveau_etude, pays_souhaite, filieres, nombre_fois_bac, status, code_validation } = req.body;
-        if (forceEnAttente) {
-            if (!code_validation) {
-                return res.status(400).json({ message: 'code_validation est requis pour confirmer la modification. Générez-en un via POST /api/codes-temporaires/generer' });
-            }
-            const etudiant = await prisma.etudiant.findUnique({ where: { id: req.etudiant.id } });
-            if (!etudiant)
-                return res.status(404).json({ message: 'Étudiant introuvable' });
-            const codeRecord = await prisma.code_temporaire.findFirst({
-                where: {
-                    code: code_validation,
-                    type: 'modification_infos',
-                    utilisateur: code_dossier,
-                    type_utilisateur: 'etudiant',
-                    utilise: false,
-                    date_expiration: { gt: new Date() },
-                },
-            });
-            if (!codeRecord) {
-                return res.status(400).json({ message: 'code_validation invalide ou expiré' });
-            }
-            await prisma.code_temporaire.update({ where: { id: codeRecord.id }, data: { utilise: true } });
-        }
+        const { niveau_etude, pays_souhaite, filieres, nombre_fois_bac, status } = req.body;
         const VALID_STATUS = ['VALIDE', 'EN_ATTENTE', 'INVALIDE'];
         if (status && !forceEnAttente && !VALID_STATUS.includes(status)) {
             return res.status(400).json({ message: `status invalide. Valeurs : ${VALID_STATUS.join(', ')}` });
