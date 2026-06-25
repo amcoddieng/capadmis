@@ -911,6 +911,9 @@ Créer les informations académiques d'un dossier.
   "pays_souhaite": "France",
   "filieres": ["Informatique", "Génie logiciel"],
   "nombre_fois_bac": 1,
+  "serie_bac": "S2",
+  "formation_en_cours": "Licence Informatique",
+  "paiement": false,
   "status": "EN_ATTENTE"
 }
 ```
@@ -929,6 +932,9 @@ Créer les informations académiques d'un dossier.
     "pays_souhaite": "France",
     "filieres": ["Informatique", "Génie logiciel"],
     "nombre_fois_bac": 1,
+    "serie_bac": "S2",
+    "formation_en_cours": "Licence Informatique",
+    "paiement": false,
     "status": "EN_ATTENTE",
     "createdAt": "...",
     "updatedAt": "..."
@@ -939,7 +945,7 @@ Créer les informations académiques d'un dossier.
 **Erreurs :**
 | Code | Cause |
 |---|---|
-| `400` | Champs requis manquants |
+| `400` | Champs requis manquants (niveau_etude, pays_souhaite, filieres, nombre_fois_bac, serie_bac, formation_en_cours) |
 | `403` | Accès refusé (dossier ne vous appartient pas, ou conseiller non assigné) |
 | `409` | Infos déjà créées pour ce dossier |
 
@@ -975,6 +981,9 @@ Modifier les informations d'un dossier.
   "pays_souhaite": "Canada",
   "filieres": ["Intelligence Artificielle"],
   "nombre_fois_bac": 2,
+  "serie_bac": "S1",
+  "formation_en_cours": "Licence Mathématiques",
+  "paiement": true,
   "status": "VALIDE"
 }
 ```
@@ -996,6 +1005,40 @@ Modifier les informations d'un dossier.
 | Code | Cause |
 |---|---|
 | `400` | Aucun champ fourni ou `status` invalide |
+
+---
+
+### `PATCH /api/infos-dossier/:code_dossier/paiement`
+Basculer le statut de paiement d'un dossier (true/false).
+
+**Auth :** Token personnel — tout rôle (`admin`, `superadmin`, `conseiller_admission`, `conseiller_visa`)
+
+**Params :** `code_dossier`
+
+**Body :**
+```json
+{
+  "paiement": true
+}
+```
+
+> 💡 Cette route est **réservée au personnel**. Les étudiants ne peuvent pas modifier le paiement.
+
+**Réponse `200` :**
+```json
+{
+  "message": "Paiement mis à jour",
+  "infos": { ... }
+}
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | `paiement` manquant ou non booléen |
+| `401` | Token absent |
+| `403` | Token étudiant (réservé au personnel) |
+| `404` | Dossier introuvable |
 
 ---
 

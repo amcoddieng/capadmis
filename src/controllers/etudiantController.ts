@@ -134,6 +134,8 @@ export const deleteEtudiant = async (req: Request, res: Response) => {
     const etudiant = await prisma.etudiant.findUnique({ where: { id } });
     if (!etudiant) return res.status(404).json({ message: 'Étudiant introuvable' });
 
+    await prisma.notification.deleteMany({ where: { destination: etudiant.email } });
+    await prisma.message.deleteMany({ where: { destinataire: etudiant.email } });
     await prisma.etudiant.delete({ where: { id } });
     return res.status(200).json({ message: 'Étudiant supprimé avec succès' });
   } catch (error) {

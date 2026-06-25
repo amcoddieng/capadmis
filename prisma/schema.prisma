@@ -154,16 +154,19 @@ model dossier {
 }
 
 model infos_dossier {
-  id              Int                @id @default(autoincrement())
-  code_dossier    String             @unique
-  dossier         dossier            @relation(fields: [code_dossier], references: [code_dossier], onDelete: Cascade)
-  niveau_etude    String
-  pays_souhaite   String
-  filieres        String[]
-  nombre_fois_bac Int
-  status          StatusInfosDossier @default(EN_ATTENTE)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id                 Int                @id @default(autoincrement())
+  code_dossier       String             @unique
+  dossier            dossier            @relation(fields: [code_dossier], references: [code_dossier], onDelete: Cascade)
+  niveau_etude       String
+  pays_souhaite      String
+  filieres           String[]
+  nombre_fois_bac    Int
+  serie_bac          String?
+  formation_en_cours String?
+  paiement           Boolean            @default(false)
+  status             StatusInfosDossier @default(EN_ATTENTE)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 }
 
 model piece_jointe {
