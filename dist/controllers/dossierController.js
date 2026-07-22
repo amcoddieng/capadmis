@@ -157,9 +157,11 @@ export const changerStatus = async (req, res) => {
         if (status_visa && !VALID_VISA.includes(status_visa)) {
             return res.status(400).json({ message: `status_visa invalide. Valeurs : ${VALID_VISA.join(', ')}` });
         }
+        const effectiveStatus = status
+            ?? (status_admission === 'ADMISSION_EN_COURS' ? 'VALIDE' : undefined);
         const data = {};
-        if (status)
-            data.status = status;
+        if (effectiveStatus)
+            data.status = effectiveStatus;
         if (status_admission)
             data.status_admission = status_admission;
         if (status_visa)
@@ -172,13 +174,13 @@ export const changerStatus = async (req, res) => {
         const etudiantPrenom = updated.etudiant.prenom;
         const etudiantNom = updated.etudiant.nom;
         const codeDossier = updated.code_dossier;
-        if (status === 'VALIDE') {
+        if (effectiveStatus === 'VALIDE') {
             envoyerNotification('validation_dossier', etudiantEmail, {
                 prenomDestinataire: etudiantPrenom, nomDestinataire: etudiantNom, codeDossier,
             }).catch(console.error);
         }
-        else if (status || status_admission || status_visa) {
-            const nouveauStatut = status ?? status_admission ?? status_visa ?? '';
+        else if (effectiveStatus || status_admission || status_visa) {
+            const nouveauStatut = effectiveStatus ?? status_admission ?? status_visa ?? '';
             envoyerNotification('change_status', etudiantEmail, {
                 prenomDestinataire: etudiantPrenom, nomDestinataire: etudiantNom, codeDossier, nouveauStatut,
             }).catch(console.error);
