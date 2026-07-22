@@ -8,11 +8,11 @@ import {
   getDossiersUniversiteByDossier,
 } from '../controllers/dossierUniversiteController.js';
 import { verifyPersonnelToken } from '../middleware/personnelMiddleware.js';
-import { verifyEtudiantOrPersonnelToken } from '../middleware/mixedAuthMiddleware.js';
+import { verifyAnyToken } from '../middleware/hybridMiddleware.js';
 
 const router = Router();
 
-router.get('/dossier/:code_dossier', verifyEtudiantOrPersonnelToken, getDossiersUniversiteByDossier);
+router.get('/dossier/:code_dossier', verifyAnyToken, getDossiersUniversiteByDossier);
 router.post('/', verifyPersonnelToken, createDossierUniversite);
 router.get('/', verifyPersonnelToken, getAllDossiersUniversite);
 router.get('/:id', verifyPersonnelToken, getDossierUniversiteById);
