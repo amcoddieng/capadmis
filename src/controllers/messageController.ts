@@ -33,6 +33,7 @@ export const envoyerMessage = async (req: HybridRequest, res: Response) => {
     emitToUser(destinataire, 'message', {
       id: message.id,
       expediteur: message.expediteur,
+      destinataire: message.destinataire,
       contenu: message.contenu,
       vu: message.vu,
       date_creation: message.date_creation,

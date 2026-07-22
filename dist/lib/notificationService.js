@@ -109,8 +109,8 @@ function buildEmailHtml(type, extras) {
           <!-- HEADER -->
           <tr>
             <td style="background-color:#1d4ed8;padding:32px 40px;text-align:center;">
-              <p style="margin:0 0 6px;color:#93c5fd;font-size:11px;font-family:Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;">Plateforme d'Admission</p>
-              <h1 style="margin:0;color:#ffffff;font-size:30px;font-family:Arial,sans-serif;font-weight:800;letter-spacing:-1px;">CAPADMIS</h1>
+              <p style="margin:0 0 10px;color:#93c5fd;font-size:11px;font-family:Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;">Plateforme d'Admission</p>
+              <img src="https://pub-1252626b56fd48ee8109ad478d776b8e.r2.dev/imageProfile/logo-horizontal-3x.png" alt="CAPADMIS" width="200" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;" />
             </td>
           </tr>
 

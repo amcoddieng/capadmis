@@ -19,8 +19,24 @@ export const envoyerMail = async (req, res) => {
         return res.status(200).json({ message: 'Email envoyé avec succès' });
     }
     catch (error) {
-        console.error('Erreur envoi email :', error);
-        return res.status(500).json({ message: 'Échec de l\'envoi de l\'email' });
+        const err = error;
+        console.error('[MailController] Erreur envoi email :', err.message);
+        if (err.message.includes('Configuration SMTP manquante')) {
+            return res.status(500).json({
+                message: 'Configuration email incomplète',
+                detail: 'Les variables IONOS_USER et/ou IONOS_PASSWORD ne sont pas définies dans le fichier .env',
+            });
+        }
+        if (err.message.includes('Missing credentials') || err.message.includes('EAUTH') || err.message.includes('Authentication')) {
+            return res.status(500).json({
+                message: 'Échec d\'authentification SMTP',
+                detail: err.message,
+            });
+        }
+        return res.status(500).json({
+            message: 'Échec de l\'envoi de l\'email',
+            detail: err.message,
+        });
     }
 };
 //# sourceMappingURL=mailController.js.map

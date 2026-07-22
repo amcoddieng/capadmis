@@ -6,10 +6,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
 
 let ioInstance: Server | null = null;
 
-const connectedUsers = new Map<string, string>(); // email → socketId
-
 export function initSocketServer(httpServer: HttpServer): Server {
   const io = new Server(httpServer, {
+    path: '/socket.io',
+    transports: ['websocket', 'polling'],
     cors: { origin: '*', methods: ['GET', 'POST'] },
   });
 
@@ -32,11 +32,10 @@ export function initSocketServer(httpServer: HttpServer): Server {
 
   io.on('connection', (socket) => {
     const email = socket.data['email'] as string;
-    connectedUsers.set(email, socket.id);
+    socket.join(email);
     console.log(`[WS] connecté : ${email}`);
 
     socket.on('disconnect', () => {
-      connectedUsers.delete(email);
       console.log(`[WS] déconnecté : ${email}`);
     });
   });
@@ -46,8 +45,5 @@ export function initSocketServer(httpServer: HttpServer): Server {
 
 export function emitToUser(email: string, event: string, data: unknown): void {
   if (!ioInstance) return;
-  const socketId = connectedUsers.get(email);
-  if (socketId) {
-    ioInstance.to(socketId).emit(event, data);
-  }
+  ioInstance.to(email).emit(event, data);
 }

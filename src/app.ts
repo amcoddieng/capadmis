@@ -34,6 +34,9 @@ app.use((req, res, next) => {
 
 app.use(json());
 app.use(cookieParser());
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/personnel', personnelRoutes);
 app.use('/api/etudiants', etudiantRoutes);
