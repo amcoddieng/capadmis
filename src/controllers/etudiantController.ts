@@ -190,6 +190,7 @@ export const monProfil = async (req: EtudiantRequest, res: Response) => {
                 pays_souhaite: true,
                 filieres: true,
                 nombre_fois_bac: true,
+                paiement: true,
                 status: true,
                 createdAt: true,
                 updatedAt: true,
