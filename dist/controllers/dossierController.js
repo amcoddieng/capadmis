@@ -43,6 +43,9 @@ export const creerDossier = async (req, res) => {
             data: { code_dossier, etudiant_id: Number(etudiant_id) },
             select: DOSSIER_SELECT,
         });
+        await prisma.infos_dossier.create({
+            data: { code_dossier, niveau_etude: '', pays_souhaite: '', filieres: [], nombre_fois_bac: 0 },
+        });
         return res.status(201).json({ message: 'Dossier créé avec succès', dossier });
     }
     catch (error) {

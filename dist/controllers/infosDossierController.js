@@ -114,16 +114,17 @@ export const modifierInfosDossier = async (req, res) => {
 export const modifierPaiement = async (req, res) => {
     try {
         const { code_dossier } = req.params;
-        const existing = await prisma.infos_dossier.findUnique({ where: { code_dossier } });
-        if (!existing)
-            return res.status(404).json({ message: 'Infos dossier introuvables' });
+        const dossier = await prisma.dossier.findUnique({ where: { code_dossier }, select: { code_dossier: true } });
+        if (!dossier)
+            return res.status(404).json({ message: 'Dossier introuvable' });
         const { paiement } = req.body;
         if (paiement === undefined) {
             return res.status(400).json({ message: 'Le champ paiement est requis (true ou false)' });
         }
-        const updated = await prisma.infos_dossier.update({
+        const updated = await prisma.infos_dossier.upsert({
             where: { code_dossier },
-            data: { paiement },
+            update: { paiement },
+            create: { code_dossier, niveau_etude: '', pays_souhaite: '', filieres: [], nombre_fois_bac: 0, paiement },
             select: INFOS_SELECT,
         });
         return res.status(200).json({ message: 'Paiement mis à jour', infos: updated });

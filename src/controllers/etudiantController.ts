@@ -86,6 +86,10 @@ export const createEtudiantByAdmin = async (req: Request, res: Response) => {
       select: { id: true, code_dossier: true },
     });
 
+    await prisma.infos_dossier.create({
+      data: { code_dossier, niveau_etude: '', pays_souhaite: '', filieres: [], nombre_fois_bac: 0 },
+    });
+
     return res.status(201).json({ message: 'Étudiant créé avec succès', etudiant, dossier });
   } catch (error) {
     console.error(error);

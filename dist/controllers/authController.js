@@ -37,6 +37,9 @@ export const register = async (req, res) => {
             data: { code_dossier, etudiant_id: etudiant.id },
             select: { id: true, code_dossier: true },
         });
+        await prisma.infos_dossier.create({
+            data: { code_dossier, niveau_etude: '', pays_souhaite: '', filieres: [], nombre_fois_bac: 0 },
+        });
         const accessToken = generateAccessToken({ id: etudiant.id, email: etudiant.email });
         const refreshToken = await createRefreshToken(etudiant.id, 'etudiant');
         setRefreshTokenCookie(res, refreshToken);
