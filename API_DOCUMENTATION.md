@@ -1757,6 +1757,167 @@ Envoyer un message WhatsApp à un numéro de téléphone.
 
 ---
 
+## ✉️ Contacter-moi
+
+Gestion des messages de contact. Le champ `appele` vaut `false` par défaut.
+
+### `POST /api/contacter-moi`
+
+Envoyer un message de contact.
+
+**Auth :** Aucune
+
+**Body :**
+```json
+{
+  "nom_complet": "Aminata Fall",
+  "email": "aminata@example.com",
+  "telephone": "221771234567",
+  "sujet": "Demande d'information",
+  "message": "Bonjour, je souhaite des informations sur les admissions."
+}
+```
+
+> `telephone` est optionnel.
+
+**Réponse `201` :**
+```json
+{
+  "message": "Message de contact envoyé avec succès",
+  "data": {
+    "id": 1,
+    "nom_complet": "Aminata Fall",
+    "email": "aminata@example.com",
+    "telephone": "221771234567",
+    "sujet": "Demande d'information",
+    "message": "Bonjour, je souhaite des informations sur les admissions.",
+    "appele": false,
+    "createdAt": "2026-08-06T12:30:00.000Z",
+    "updatedAt": "2026-08-06T12:30:00.000Z"
+  }
+}
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | `nom_complet`, `email`, `sujet` ou `message` manquant |
+| `500` | Erreur serveur |
+
+---
+
+### `GET /api/contacter-moi`
+
+Liste de tous les messages de contact.
+
+**Auth :** Token personnel — tout rôle
+
+**Réponse `200` :**
+```json
+{
+  "data": [
+    { "id": 1, "nom_complet": "...", "email": "...", "sujet": "...", "message": "...", "appele": false }
+  ]
+}
+```
+
+---
+
+### `GET /api/contacter-moi/:id`
+
+Récupérer un message de contact par ID.
+
+**Auth :** Token personnel — tout rôle
+
+**Réponse `200` :**
+```json
+{
+  "data": { "id": 1, "nom_complet": "...", "email": "...", "sujet": "...", "message": "...", "appele": false }
+}
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | ID invalide |
+| `404` | Contact introuvable |
+
+---
+
+### `PUT /api/contacter-moi/:id`
+
+Modifier un message de contact. Tous les champs sont optionnels.
+
+**Auth :** Token personnel — tout rôle
+
+**Body :**
+```json
+{
+  "nom_complet": "Aminata Fall",
+  "email": "aminata@example.com",
+  "telephone": "221771234567",
+  "sujet": "Demande d'information",
+  "message": "Message modifié"
+}
+```
+
+**Réponse `200` :**
+```json
+{
+  "message": "Contact mis à jour",
+  "data": { "id": 1, ... }
+}
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | ID invalide ou aucun champ à mettre à jour |
+| `404` | Contact introuvable |
+
+---
+
+### `DELETE /api/contacter-moi/:id`
+
+Supprimer un message de contact.
+
+**Auth :** Token personnel — tout rôle
+
+**Réponse `200` :**
+```json
+{ "message": "Contact supprimé avec succès" }
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | ID invalide |
+| `404` | Contact introuvable |
+
+---
+
+### `PATCH /api/contacter-moi/:id/appele`
+
+Bascule le statut `appele` du message (false → true ou inversement).
+
+**Auth :** Token personnel — tout rôle
+
+**Réponse `200` :**
+```json
+{
+  "message": "Statut appelé activé",
+  "data": { "id": 1, ..., "appele": true }
+}
+```
+
+**Erreurs :**
+| Code | Cause |
+|---|---|
+| `400` | ID invalide |
+| `404` | Contact introuvable |
+
+---
+
 ## ⚠️ Codes d'erreur communs
 
 | Code HTTP | Signification |

@@ -234,6 +234,18 @@ model dossier_universite {
   updatedAt          DateTime                @updatedAt
 }
 
+model contacter_moi {
+  id          Int      @id @default(autoincrement())
+  nom_complet String
+  email       String
+  telephone   String?
+  sujet       String
+  message     String
+  appele      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model refresh_token {
   id        Int      @id @default(autoincrement())
   token     String   @unique
