@@ -1916,7 +1916,7 @@ Bascule le statut `appele` du message (false → true ou inversement).
 | `400` | ID invalide |
 | `404` | Contact introuvable |
  s
----
+----
 
 ## ⚠️ Codes d'erreur communs
 
