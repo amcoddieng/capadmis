@@ -1358,7 +1358,7 @@ Modifie les informations personnelles après validation du code temporaire.
 | `personnel` | L'utilisateur est un membre du personnel |
 
 ### `TypePieceJointe`
-| Valeur | Description |
+| Valeur | Description | 
 |---|---| 
 | `PHOTO_PROFIL` | Photo d'identité / profil |
 | `PASSEPORT` | Passeport |
