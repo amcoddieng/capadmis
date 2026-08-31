@@ -1359,7 +1359,7 @@ Modifie les informations personnelles après validation du code temporaire.
 
 ### `TypePieceJointe`
 | Valeur | Description |
-|---|---|
+|---|---| 
 | `PHOTO_PROFIL` | Photo d'identité / profil |
 | `PASSEPORT` | Passeport |
 | `CARTE_IDENTITE` | Carte d'identité nationale |
