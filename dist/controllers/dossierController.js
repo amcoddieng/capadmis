@@ -4,7 +4,7 @@ const DOSSIER_SELECT = {
     id: true,
     code_dossier: true,
     etudiant_id: true,
-    etudiant: { select: { id: true, nom: true, prenom: true, email: true, ville: true, payes: true, lieu_de_naissance: true, date_de_naissance: true, bloque: true } },
+    etudiant: { select: { id: true, nom: true, prenom: true, email: true, ville: true, payes: true, lieu_de_naissance: true, date_de_naissance: true, telephone: true, numero_tuteur: true, bloque: true } },
     conseiller_admission_id: true,
     conseiller_admission: { select: { id: true, nom: true, prenom: true, code: true } },
     conseiller_visa_id: true,

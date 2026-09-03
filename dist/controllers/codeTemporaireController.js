@@ -159,6 +159,8 @@ export const modifierInfos = async (req, res) => {
             data.date_de_naissance = new Date(infos.date_de_naissance);
         if (infos.lieu_de_naissance)
             data.lieu_de_naissance = infos.lieu_de_naissance;
+        if (infos.numero_tuteur !== undefined)
+            data.numero_tuteur = infos.numero_tuteur?.trim() || null;
         if (Object.keys(data).length === 0) {
             return res.status(400).json({ message: 'Au moins un champ à modifier est requis' });
         }

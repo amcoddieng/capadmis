@@ -4,7 +4,7 @@ import { generateUniqueDossierCode } from './dossierController.js';
 import { generateAccessToken, createRefreshToken, setRefreshTokenCookie, revokeAllUserRefreshTokens, } from '../lib/tokenService.js';
 export const register = async (req, res) => {
     try {
-        const { nom, prenom, email, mdp, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone } = req.body;
+        const { nom, prenom, email, mdp, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, numero_tuteur } = req.body;
         if (!telephone) {
             return res.status(400).json({ message: 'Le numéro de téléphone est requis' });
         }
@@ -29,7 +29,8 @@ export const register = async (req, res) => {
                 payes,
                 date_de_naissance: new Date(date_de_naissance),
                 lieu_de_naissance,
-                telephone
+                telephone,
+                numero_tuteur: numero_tuteur?.trim() || null,
             }
         });
         const code_dossier = await generateUniqueDossierCode();

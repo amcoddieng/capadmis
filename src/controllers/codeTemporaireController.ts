@@ -181,6 +181,7 @@ export const modifierInfos = async (req: Request, res: Response) => {
       sexe?: string;
       date_de_naissance?: string;
       lieu_de_naissance?: string;
+      numero_tuteur?: string;
     };
 
     if (!email || !code) {
@@ -200,6 +201,7 @@ export const modifierInfos = async (req: Request, res: Response) => {
     if (infos.sexe) data.sexe = infos.sexe;
     if (infos.date_de_naissance) data.date_de_naissance = new Date(infos.date_de_naissance);
     if (infos.lieu_de_naissance) data.lieu_de_naissance = infos.lieu_de_naissance;
+    if (infos.numero_tuteur !== undefined) data.numero_tuteur = infos.numero_tuteur?.trim() || null;
 
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ message: 'Au moins un champ à modifier est requis' });

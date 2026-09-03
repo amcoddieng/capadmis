@@ -5,7 +5,7 @@ const SAFE_SELECT = {
     id: true, nom: true, prenom: true, email: true,
     sexe: true, ville: true, payes: true,
     date_de_naissance: true, lieu_de_naissance: true,
-    telephone: true,
+    telephone: true, numero_tuteur: true,
     bloque: true, createdAt: true, updatedAt: true,
 };
 export const updateSelf = async (req, res) => {
@@ -18,7 +18,7 @@ export const updateSelf = async (req, res) => {
             return res.status(404).json({ message: 'Étudiant introuvable' });
         if (etudiant.bloque)
             return res.status(403).json({ message: 'Compte bloqué' });
-        const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, mdp, mdp_actuel } = req.body;
+        const { nom, prenom, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, numero_tuteur, mdp, mdp_actuel } = req.body;
         const data = {};
         if (nom)
             data.nom = nom;
@@ -36,6 +36,8 @@ export const updateSelf = async (req, res) => {
             data.date_de_naissance = new Date(date_de_naissance);
         if (telephone)
             data.telephone = telephone;
+        if (numero_tuteur !== undefined)
+            data.numero_tuteur = numero_tuteur?.trim() || null;
         if (mdp) {
             if (!mdp_actuel) {
                 return res.status(400).json({ message: 'mdp_actuel est requis pour changer le mot de passe' });
@@ -59,7 +61,7 @@ export const updateSelf = async (req, res) => {
 };
 export const createEtudiantByAdmin = async (req, res) => {
     try {
-        const { nom, prenom, email, mdp, sexe, ville, payes, date_de_naissance, lieu_de_naissance } = req.body;
+        const { nom, prenom, email, mdp, sexe, ville, payes, date_de_naissance, lieu_de_naissance, numero_tuteur } = req.body;
         if (!nom || !prenom || !email || !mdp || !sexe || !ville || !payes || !date_de_naissance || !lieu_de_naissance) {
             return res.status(400).json({ message: 'Tous les champs sont requis' });
         }
@@ -68,7 +70,7 @@ export const createEtudiantByAdmin = async (req, res) => {
             return res.status(409).json({ message: 'Cet email est déjà utilisé' });
         const hashedPassword = await bcrypt.hash(mdp, 10);
         const etudiant = await prisma.etudiant.create({
-            data: { nom, prenom, email, mdp: hashedPassword, sexe, ville, payes, date_de_naissance: new Date(date_de_naissance), lieu_de_naissance },
+            data: { nom, prenom, email, mdp: hashedPassword, sexe, ville, payes, date_de_naissance: new Date(date_de_naissance), lieu_de_naissance, numero_tuteur: numero_tuteur?.trim() || null },
             select: { ...SAFE_SELECT, id: true },
         });
         const code_dossier = await generateUniqueDossierCode();
@@ -94,7 +96,7 @@ export const updateEtudiantByAdmin = async (req, res) => {
         const etudiant = await prisma.etudiant.findUnique({ where: { id } });
         if (!etudiant)
             return res.status(404).json({ message: 'Étudiant introuvable' });
-        const { nom, prenom, email, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, mdp } = req.body;
+        const { nom, prenom, email, sexe, ville, payes, date_de_naissance, lieu_de_naissance, telephone, numero_tuteur, mdp } = req.body;
         const data = {};
         if (nom)
             data.nom = nom;
@@ -114,6 +116,8 @@ export const updateEtudiantByAdmin = async (req, res) => {
             data.date_de_naissance = new Date(date_de_naissance);
         if (telephone)
             data.telephone = telephone;
+        if (numero_tuteur !== undefined)
+            data.numero_tuteur = numero_tuteur?.trim() || null;
         if (mdp)
             data.mdp = await bcrypt.hash(mdp, 10);
         const updated = await prisma.etudiant.update({ where: { id }, data, select: SAFE_SELECT });
