@@ -1,18 +1,23 @@
 import jwt from 'jsonwebtoken';
 import prisma from './prisma.js';
 import { randomUUID } from 'crypto';
-const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'votre_refresh_secrete_par_defaut';
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
+if (process.env.NODE_ENV === 'production' && (!JWT_SECRET || !REFRESH_SECRET)) {
+    throw new Error('JWT_SECRET et REFRESH_SECRET doivent être définis en production');
+}
+const FINAL_JWT_SECRET = JWT_SECRET || 'votre_cle_secrete_par_defaut';
+const FINAL_REFRESH_SECRET = REFRESH_SECRET || 'votre_refresh_secrete_par_defaut';
 const ACCESS_EXPIRY = '15m';
 const REFRESH_EXPIRY = '7d';
 const REFRESH_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours
 const COOKIE_NAME = 'refresh_token';
 const IS_PROD = process.env.NODE_ENV === 'production';
 export function generateAccessToken(payload) {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
+    return jwt.sign(payload, FINAL_JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
 }
 export async function createRefreshToken(userId, userType) {
-    const token = jwt.sign({ sub: userId, type: userType, jti: randomUUID() }, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRY });
+    const token = jwt.sign({ sub: userId, type: userType, jti: randomUUID() }, FINAL_REFRESH_SECRET, { expiresIn: REFRESH_EXPIRY });
     const expiresAt = new Date(Date.now() + REFRESH_EXPIRY_MS);
     await prisma.refresh_token.create({
         data: { token, user_id: userId, user_type: userType, expiresAt },
@@ -38,7 +43,7 @@ export function clearRefreshTokenCookie(res) {
 }
 export async function verifyRefreshToken(token) {
     try {
-        const decoded = jwt.verify(token, REFRESH_SECRET, { clockTolerance: 60 });
+        const decoded = jwt.verify(token, FINAL_REFRESH_SECRET, { clockTolerance: 60 });
         const stored = await prisma.refresh_token.findUnique({ where: { token } });
         if (!stored || stored.expiresAt < new Date()) {
             return null;

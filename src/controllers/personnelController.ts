@@ -11,6 +11,10 @@ import {
   revokeAllUserRefreshTokens,
 } from '../lib/tokenService.js';
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET doit être défini en production');
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
 
 const CONSEILLER_ROLES: Role[] = ['conseiller_visa', 'conseiller_admission'];

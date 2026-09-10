@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma.js';
 import { generateAccessToken, createRefreshToken, setRefreshTokenCookie, revokeAllUserRefreshTokens, } from '../lib/tokenService.js';
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET doit être défini en production');
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
 const CONSEILLER_ROLES = ['conseiller_visa', 'conseiller_admission'];
 const ALLOWED_ROLES = ['admin', ...CONSEILLER_ROLES];

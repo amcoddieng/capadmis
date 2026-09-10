@@ -1,5 +1,6 @@
 import express, { json } from 'express';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import authRoutes from './route/authRoutes.js';
 import personnelRoutes from './route/personnelRoutes.js';
 import etudiantRoutes from './route/etudiantRoutes.js';
@@ -30,6 +31,30 @@ app.use((req, res, next) => {
     }
     next();
 });
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+            fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+            imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+            connectSrc: ["'self'", 'https:', 'wss:'],
+            frameSrc: ["'self'", 'https://wa.me'],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+            formAction: ["'self'"],
+            frameAncestors: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+    },
+}));
 app.use(json());
 app.use(cookieParser());
 app.get('/health', (_req, res) => {

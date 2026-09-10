@@ -1,6 +1,10 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
-const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
+    throw new Error('JWT_SECRET doit être défini en production');
+}
+const FINAL_JWT_SECRET = JWT_SECRET || 'votre_cle_secrete_par_defaut';
 let ioInstance = null;
 export function initSocketServer(httpServer) {
     const io = new Server(httpServer, {
@@ -14,7 +18,7 @@ export function initSocketServer(httpServer) {
         if (!token)
             return next(new Error('Token manquant'));
         try {
-            const decoded = jwt.verify(token, JWT_SECRET);
+            const decoded = jwt.verify(token, FINAL_JWT_SECRET);
             const email = decoded['email'];
             if (!email)
                 return next(new Error('Token invalide : email manquant'));

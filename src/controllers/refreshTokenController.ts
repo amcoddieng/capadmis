@@ -30,7 +30,7 @@ export const refresh = async (req: Request, res: Response) => {
         return res.status(403).json({ message: 'Compte introuvable ou bloqué' });
       }
       const accessToken = generateAccessToken({ id: etudiant.id, email: etudiant.email });
-      return res.status(200).json({ accessToken, userType: 'etudiant' });
+      return res.status(200).json({ accessToken, userType: 'etudiant', etudiant });
     }
 
     if (verified.userType === 'personnel') {
@@ -45,7 +45,7 @@ export const refresh = async (req: Request, res: Response) => {
       const accessToken = generateAccessToken({
         id: personnel.id, email: personnel.email, role: personnel.role, code: personnel.code,
       });
-      return res.status(200).json({ accessToken, userType: 'personnel' });
+      return res.status(200).json({ accessToken, userType: 'personnel', personnel });
     }
 
     return res.status(403).json({ message: 'Type utilisateur invalide' });

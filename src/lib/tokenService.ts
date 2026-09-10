@@ -3,8 +3,15 @@ import { Response } from 'express';
 import prisma from './prisma.js';
 import { randomUUID } from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'votre_cle_secrete_par_defaut';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'votre_refresh_secrete_par_defaut';
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
+
+if (process.env.NODE_ENV === 'production' && (!JWT_SECRET || !REFRESH_SECRET)) {
+  throw new Error('JWT_SECRET et REFRESH_SECRET doivent être définis en production');
+}
+
+const FINAL_JWT_SECRET = JWT_SECRET || 'votre_cle_secrete_par_defaut';
+const FINAL_REFRESH_SECRET = REFRESH_SECRET || 'votre_refresh_secrete_par_defaut';
 
 const ACCESS_EXPIRY = '15m';
 const REFRESH_EXPIRY = '7d';
@@ -14,13 +21,13 @@ const COOKIE_NAME = 'refresh_token';
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 export function generateAccessToken(payload: object): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
+  return jwt.sign(payload, FINAL_JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
 }
 
 export async function createRefreshToken(userId: number, userType: 'etudiant' | 'personnel'): Promise<string> {
   const token = jwt.sign(
     { sub: userId, type: userType, jti: randomUUID() },
-    REFRESH_SECRET,
+    FINAL_REFRESH_SECRET,
     { expiresIn: REFRESH_EXPIRY }
   );
 
@@ -54,7 +61,7 @@ export function clearRefreshTokenCookie(res: Response): void {
 
 export async function verifyRefreshToken(token: string): Promise<{ userId: number; userType: 'etudiant' | 'personnel' } | null> {
   try {
-    const decoded = jwt.verify(token, REFRESH_SECRET, { clockTolerance: 60 }) as unknown as {
+    const decoded = jwt.verify(token, FINAL_REFRESH_SECRET, { clockTolerance: 60 }) as unknown as {
       sub: number;
       type: string;
       jti?: string;
