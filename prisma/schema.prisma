@@ -16,6 +16,7 @@ enum StatusDossier {
   EN_COURS_D_ETUDE
   VALIDE
   CHANGEMENT_A_APPORTER
+  DOCUMENT_MANQUANT
 }
 
 enum StatusAdmission {

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "StatusDossier" ADD VALUE 'DOCUMENT_MANQUANT';
