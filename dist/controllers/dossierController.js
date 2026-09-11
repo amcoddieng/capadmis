@@ -127,7 +127,7 @@ export const changerStatus = async (req, res) => {
         if (!dossier)
             return res.status(404).json({ message: 'Dossier introuvable' });
         const { status, status_admission, status_visa } = req.body;
-        const VALID_STATUS = ['EN_COURS_D_ETUDE', 'VALIDE', 'CHANGEMENT_A_APPORTER'];
+        const VALID_STATUS = ['non_demarre', 'EN_COURS_D_ETUDE', 'VALIDE', 'CHANGEMENT_A_APPORTER'];
         const VALID_ADMISSION = ['ADMISSION_EN_COURS', 'ADMISSION_VALIDE', 'ADMISSION_INVALIDE'];
         const VALID_VISA = ['DEMANDE_VISA_EN_COURS', 'DEMANDE_VISA_VALIDE', 'DEMANDE_VISA_INVALIDE'];
         const isAdminOrSuperAdmin = callerRole === 'superadmin' || callerRole === 'admin';

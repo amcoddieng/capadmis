@@ -145,7 +145,7 @@ export const changerStatus = async (req: Request & { personnel?: { id: number; r
       status_visa?: StatusVisa;
     };
 
-    const VALID_STATUS: StatusDossier[] = ['EN_COURS_D_ETUDE', 'VALIDE', 'CHANGEMENT_A_APPORTER'];
+    const VALID_STATUS: StatusDossier[] = ['non_demarre', 'EN_COURS_D_ETUDE', 'VALIDE', 'CHANGEMENT_A_APPORTER'];
     const VALID_ADMISSION: StatusAdmission[] = ['ADMISSION_EN_COURS', 'ADMISSION_VALIDE', 'ADMISSION_INVALIDE'];
     const VALID_VISA: StatusVisa[] = ['DEMANDE_VISA_EN_COURS', 'DEMANDE_VISA_VALIDE', 'DEMANDE_VISA_INVALIDE'];
 
