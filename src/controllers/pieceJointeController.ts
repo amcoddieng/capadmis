@@ -153,28 +153,34 @@ export const getPieceJointe = async (req: HybridRequest, res: Response) => {
   }
 };
 
-const TYPE_PJ_LABELS: Record<string, string> = {
-  PHOTO_PROFIL: 'Photo d\'identité',
-  PASSEPORT: 'Passeport',
-  CARTE_IDENTITE: 'Carte d\'identité',
-  DIPLOME_BAC: 'Diplôme - Baccalauréat',
-  DIPLOME_LICENCE: 'Diplôme - Licence',
-  DIPLOME_MASTER: 'Diplôme - Master',
-  DIPLOME_DOCTORAT: 'Diplôme - Doctorat',
-  ATTESTATION: 'Attestations',
-  RELEVE_NOTES_BAC: 'Relevé de notes - Bac',
-  BULLETIN_NOTES_SECONDE: 'Bulletins - Seconde',
-  BULLETIN_NOTES_PREMIERE: 'Bulletins - Première',
-  BULLETIN_NOTES_TERMINALE: 'Bulletins - Terminale',
-  BULLETIN_NOTES_LICENCE_1: 'Bulletins - Licence 1',
-  BULLETIN_NOTES_LICENCE_2: 'Bulletins - Licence 2',
-  BULLETIN_NOTES_LICENCE_3: 'Bulletins - Licence 3',
-  BULLETIN_NOTES_MASTER_1: 'Bulletins - Master 1',
-  BULLETIN_NOTES_MASTER_2: 'Bulletins - Master 2',
-  BULLETIN_NOTES_DOCTORAT: 'Bulletins - Doctorat',
-  LETTRE_MOTIVATION: 'Lettre de motivation',
-  CV: 'CV',
-  AUTRE: 'Autres',
+const TYPE_PJ_FOLDERS: Record<string, string> = {
+  PHOTO_PROFIL: 'dossier identite',
+  PASSEPORT: 'dossier identite',
+  CARTE_IDENTITE: 'dossier identite',
+  DIPLOME_BAC: 'dossier scolaire/baccalaureat',
+  RELEVE_NOTES_BAC: 'dossier scolaire/baccalaureat',
+  BULLETIN_NOTES_SECONDE: 'dossier scolaire/secondaire',
+  BULLETIN_NOTES_PREMIERE: 'dossier scolaire/secondaire',
+  BULLETIN_NOTES_TERMINALE: 'dossier scolaire/secondaire',
+  BULLETIN_NOTES_LICENCE_1: 'dossier scolaire/licence',
+  BULLETIN_NOTES_LICENCE_2: 'dossier scolaire/licence',
+  BULLETIN_NOTES_LICENCE_3: 'dossier scolaire/licence',
+  DIPLOME_LICENCE: 'dossier scolaire/licence',
+  BULLETIN_NOTES_BT1_S1: 'dossier scolaire/bts',
+  BULLETIN_NOTES_BT1_S2: 'dossier scolaire/bts',
+  BULLETIN_NOTES_BT2_S1: 'dossier scolaire/bts',
+  BULLETIN_NOTES_BT2_S2: 'dossier scolaire/bts',
+  BULLETIN_NOTES_BT3_S1: 'dossier scolaire/bts',
+  BULLETIN_NOTES_BT3_S2: 'dossier scolaire/bts',
+  BULLETIN_NOTES_MASTER_1: 'dossier scolaire/master',
+  BULLETIN_NOTES_MASTER_2: 'dossier scolaire/master',
+  DIPLOME_MASTER: 'dossier scolaire/master',
+  BULLETIN_NOTES_DOCTORAT: 'dossier scolaire/doctorat',
+  DIPLOME_DOCTORAT: 'dossier scolaire/doctorat',
+  LETTRE_MOTIVATION: 'dossier autres',
+  CV: 'dossier autres',
+  ATTESTATION: 'dossier autres',
+  AUTRE: 'dossier autres',
 };
 
 function sanitizeFolderName(name: string): string {
@@ -222,8 +228,8 @@ export const telechargerPiecesJointesZip = async (req: HybridRequest, res: Respo
         }
         const buffer = Buffer.concat(chunks);
 
-        const folderName = sanitizeFolderName(TYPE_PJ_LABELS[piece.type] || piece.type || 'Autres');
-        const folder = root.folder(folderName) || root;
+        const folderPath = TYPE_PJ_FOLDERS[piece.type] || 'dossier autres';
+        const folder = root.folder(sanitizeFolderName(folderPath)) || root;
         folder.file(piece.nom, buffer);
       } catch (err) {
         console.error(`Erreur lors du téléchargement de ${piece.nom}:`, err);
@@ -232,7 +238,7 @@ export const telechargerPiecesJointesZip = async (req: HybridRequest, res: Respo
 
     const content = await zip.generateAsync({ type: 'nodebuffer' });
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${code_dossier}_pieces.zip"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${folderName}.zip"`);
     res.setHeader('Content-Length', content.length.toString());
     return res.status(200).send(content);
   } catch (error) {

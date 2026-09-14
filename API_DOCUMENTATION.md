@@ -1111,7 +1111,27 @@ Télécharger toutes les pièces jointes d'un dossier sous forme d'archive ZIP, 
 
 **Auth :** Token personnel — conseiller assigné, admin ou superadmin
 
-**Réponse `200` :** Fichier ZIP (`application/zip`) nommé `{code_dossier}_{prenom}_{nom}.zip`
+**Réponse `200` :** Fichier ZIP (`application/zip`) nommé `{code_dossier}_{prenom}_{nom}.zip`, organisé comme suit :
+```
+{code_dossier}_{prenom}_{nom}.zip
+└── {code_dossier}_{prenom}_{nom}/
+    ├── dossier identite/
+    │   ├── PHOTO_PROFIL
+    │   ├── PASSEPORT
+    │   └── CARTE_IDENTITE
+    ├── dossier scolaire/
+    │   ├── secondaire/
+    │   ├── baccalaureat/
+    │   ├── licence/
+    │   ├── bts/
+    │   ├── master/
+    │   └── doctorat/
+    └── dossier autres/
+        ├── LETTRE_MOTIVATION
+        ├── CV
+        ├── ATTESTATION
+        └── AUTRE
+```
 
 **Réponse `404` :**
 ```json
