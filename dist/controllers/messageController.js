@@ -46,6 +46,15 @@ export const mesConversations = async (req, res) => {
         });
         const seen = new Set();
         const conversations = [];
+        const interlocuteurs = [...new Set(messages.map(msg => msg.expediteur === email ? msg.destinataire : msg.expediteur))];
+        const [etudiants, personnels] = await Promise.all([
+            prisma.etudiant.findMany({ where: { email: { in: interlocuteurs } }, select: { email: true, prenom: true, nom: true } }),
+            prisma.personnel.findMany({ where: { email: { in: interlocuteurs } }, select: { email: true, prenom: true, nom: true } }),
+        ]);
+        const nomParEmail = new Map();
+        [...etudiants, ...personnels].forEach(u => {
+            nomParEmail.set(u.email, `${u.prenom} ${u.nom}`.trim());
+        });
         for (const msg of messages) {
             const interlocuteur = msg.expediteur === email ? msg.destinataire : msg.expediteur;
             if (!seen.has(interlocuteur)) {
@@ -55,6 +64,7 @@ export const mesConversations = async (req, res) => {
                 });
                 conversations.push({
                     interlocuteur,
+                    nom: nomParEmail.get(interlocuteur) || null,
                     dernier_message: msg.contenu,
                     date: msg.date_creation,
                     non_lus,

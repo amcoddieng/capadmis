@@ -59,10 +59,23 @@ export const mesConversations = async (req: HybridRequest, res: Response) => {
     const seen = new Set<string>();
     const conversations: {
       interlocuteur: string;
+      nom: string | null;
       dernier_message: string | null;
       date: Date;
       non_lus: number;
     }[] = [];
+
+    const interlocuteurs = [...new Set(messages.map(msg => msg.expediteur === email ? msg.destinataire : msg.expediteur))];
+
+    const [etudiants, personnels] = await Promise.all([
+      prisma.etudiant.findMany({ where: { email: { in: interlocuteurs } }, select: { email: true, prenom: true, nom: true } }),
+      prisma.personnel.findMany({ where: { email: { in: interlocuteurs } }, select: { email: true, prenom: true, nom: true } }),
+    ]);
+
+    const nomParEmail = new Map<string, string>();
+    [...etudiants, ...personnels].forEach(u => {
+      nomParEmail.set(u.email, `${u.prenom} ${u.nom}`.trim());
+    });
 
     for (const msg of messages) {
       const interlocuteur = msg.expediteur === email ? msg.destinataire : msg.expediteur;
@@ -73,6 +86,7 @@ export const mesConversations = async (req: HybridRequest, res: Response) => {
         });
         conversations.push({
           interlocuteur,
+          nom: nomParEmail.get(interlocuteur) || null,
           dernier_message: msg.contenu,
           date: msg.date_creation,
           non_lus,
