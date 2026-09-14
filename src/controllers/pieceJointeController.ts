@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import path from 'path';
+import JSZip from 'jszip';
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { TypePieceJointe, StatusPieceJointe } from '@prisma/client';
@@ -146,6 +147,94 @@ export const getPieceJointe = async (req: HybridRequest, res: Response) => {
     );
 
     return res.status(200).json({ piece, url });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+const TYPE_PJ_LABELS: Record<string, string> = {
+  PHOTO_PROFIL: 'Photo d\'identité',
+  PASSEPORT: 'Passeport',
+  CARTE_IDENTITE: 'Carte d\'identité',
+  DIPLOME_BAC: 'Diplôme - Baccalauréat',
+  DIPLOME_LICENCE: 'Diplôme - Licence',
+  DIPLOME_MASTER: 'Diplôme - Master',
+  DIPLOME_DOCTORAT: 'Diplôme - Doctorat',
+  ATTESTATION: 'Attestations',
+  RELEVE_NOTES_BAC: 'Relevé de notes - Bac',
+  BULLETIN_NOTES_SECONDE: 'Bulletins - Seconde',
+  BULLETIN_NOTES_PREMIERE: 'Bulletins - Première',
+  BULLETIN_NOTES_TERMINALE: 'Bulletins - Terminale',
+  BULLETIN_NOTES_LICENCE_1: 'Bulletins - Licence 1',
+  BULLETIN_NOTES_LICENCE_2: 'Bulletins - Licence 2',
+  BULLETIN_NOTES_LICENCE_3: 'Bulletins - Licence 3',
+  BULLETIN_NOTES_MASTER_1: 'Bulletins - Master 1',
+  BULLETIN_NOTES_MASTER_2: 'Bulletins - Master 2',
+  BULLETIN_NOTES_DOCTORAT: 'Bulletins - Doctorat',
+  LETTRE_MOTIVATION: 'Lettre de motivation',
+  CV: 'CV',
+  AUTRE: 'Autres',
+};
+
+function sanitizeFolderName(name: string): string {
+  return name.replace(/[<>:"/\\|?*]/g, '_').trim() || 'Divers';
+}
+
+export const telechargerPiecesJointesZip = async (req: HybridRequest, res: Response) => {
+  try {
+    const { code_dossier } = req.params as { code_dossier: string };
+
+    const { role, reason } = await resolveAccess(req, code_dossier);
+    if (!role) return res.status(403).json({ message: reason });
+
+    const dossier = await prisma.dossier.findUnique({
+      where: { code_dossier },
+      select: { etudiant: { select: { prenom: true, nom: true } } },
+    });
+
+    const pieces = await prisma.piece_jointe.findMany({
+      where: { codeDossier: code_dossier },
+      select: PIECE_SELECT,
+      orderBy: { date_creation: 'desc' },
+    });
+
+    if (pieces.length === 0) {
+      return res.status(404).json({ message: 'Aucune pièce jointe pour ce dossier' });
+    }
+
+    const prenom = dossier?.etudiant?.prenom || '';
+    const nom = dossier?.etudiant?.nom || '';
+    const folderName = sanitizeFolderName(`${code_dossier}_${prenom}_${nom}`.replace(/_+$/, '').replace(/^_+/, '') || `${code_dossier}_pieces`);
+
+    const zip = new JSZip();
+    const root = zip.folder(folderName) || zip;
+
+    for (const piece of pieces) {
+      try {
+        const obj = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: piece.nom }));
+        const body = obj.Body;
+        if (!body) continue;
+
+        const chunks: Buffer[] = [];
+        for await (const chunk of body as NodeJS.ReadableStream) {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        }
+        const buffer = Buffer.concat(chunks);
+
+        const folderName = sanitizeFolderName(TYPE_PJ_LABELS[piece.type] || piece.type || 'Autres');
+        const folder = root.folder(folderName) || root;
+        folder.file(piece.nom, buffer);
+      } catch (err) {
+        console.error(`Erreur lors du téléchargement de ${piece.nom}:`, err);
+      }
+    }
+
+    const content = await zip.generateAsync({ type: 'nodebuffer' });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${code_dossier}_pieces.zip"`);
+    res.setHeader('Content-Length', content.length.toString());
+    return res.status(200).send(content);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Erreur serveur' });

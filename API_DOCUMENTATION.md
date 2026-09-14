@@ -1106,6 +1106,20 @@ Lister toutes les pièces jointes d'un dossier.
 
 ---
 
+### `GET /api/pieces-jointes/dossier/:code_dossier/telecharger`
+Télécharger toutes les pièces jointes d'un dossier sous forme d'archive ZIP, organisées en sous-dossiers par type de document.
+
+**Auth :** Token personnel — conseiller assigné, admin ou superadmin
+
+**Réponse `200` :** Fichier ZIP (`application/zip`) nommé `{code_dossier}_{prenom}_{nom}.zip`
+
+**Réponse `404` :**
+```json
+{ "message": "Aucune pièce jointe pour ce dossier" }
+```
+
+---
+
 ### `GET /api/pieces-jointes/:id`
 Obtenir une URL de téléchargement signée valable **1 heure**.
 
