@@ -20,14 +20,25 @@ export interface MailOptions {
   html?: string;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function buildGenericEmailHtml(subject: string, message: string): string {
   const year = new Date().getFullYear();
+  const safeSubject = escapeHtml(subject);
+  const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>');
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>${subject}</title>
+  <title>${safeSubject}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f0f4f8;">
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4f8;padding:40px 16px;">
@@ -42,13 +53,13 @@ function buildGenericEmailHtml(subject: string, message: string): string {
           </tr>
           <tr>
             <td style="background-color:#eff6ff;border-bottom:1px solid #dbeafe;padding:14px 40px;text-align:center;">
-              <span style="display:inline-block;background-color:#1d4ed8;color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:700;padding:5px 18px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;">${subject}</span>
+              <span style="display:inline-block;background-color:#1d4ed8;color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:700;padding:5px 18px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;">${safeSubject}</span>
             </td>
           </tr>
           <tr>
             <td style="padding:40px;">
               <p style="margin:0 0 18px;color:#1f2937;font-size:16px;font-family:Arial,sans-serif;font-weight:600;">Bonjour,</p>
-              <p style="margin:0 0 8px;color:#374151;font-size:15px;font-family:Arial,sans-serif;line-height:1.7;">${message.replace(/\n/g, '<br/>')}</p>
+              <p style="margin:0 0 8px;color:#374151;font-size:15px;font-family:Arial,sans-serif;line-height:1.7;">${safeMessage}</p>
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:32px;border-top:1px solid #f3f4f6;">
                 <tr>
                   <td style="padding-top:24px;">

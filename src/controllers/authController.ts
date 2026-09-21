@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma.js';
 import { generateUniqueDossierCode } from './dossierController.js';
+import { sendMail } from '../lib/mailer.js';
 import {
   generateAccessToken,
   createRefreshToken,
@@ -55,6 +56,12 @@ export const register = async (req: Request, res: Response) => {
     await prisma.infos_dossier.create({
       data: { code_dossier, niveau_etude: '', pays_souhaite: '', filieres: [], nombre_fois_bac: 0 },
     });
+
+    sendMail({
+      to: process.env.ADMIN_NOTIFICATION_EMAIL || process.env.CONTACT_EMAIL || 'capadmis.france@gmail.com',
+      subject: `Nouveau compte étudiant — ${code_dossier}`,
+      message: `Un nouveau compte étudiant vient d’être créé.\n\nÉtudiant : ${prenom} ${nom}\nEmail : ${email}\nTéléphone : ${telephone}\nDossier : ${code_dossier}\nPays : ${payes || 'Non renseigné'}\nVille : ${ville || 'Non renseignée'}`,
+    }).catch((mailError) => console.error('[Email] Notification de création de compte non envoyée :', mailError));
 
     const accessToken = generateAccessToken({ id: etudiant.id, email: etudiant.email });
     const refreshToken = await createRefreshToken(etudiant.id, 'etudiant');

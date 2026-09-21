@@ -8,6 +8,7 @@ import { r2, R2_BUCKET } from '../lib/r2.js';
 import prisma from '../lib/prisma.js';
 import type { HybridRequest } from '../middleware/hybridMiddleware.js';
 import { envoyerNotification } from '../lib/notificationService.js';
+import { sendMail } from '../lib/mailer.js';
 
 type MulterRequest = HybridRequest & { file?: Express.Multer.File };
 
@@ -70,6 +71,19 @@ function buildNom(codeDossier: string, type: string, etudiantId: number | undefi
   return `${codeDossier}_${type}_${id}_${Date.now()}${ext}`;
 }
 
+async function notifierDocument(codeDossier: string, type: string, action: 'ajouté' | 'modifié'): Promise<void> {
+  const dossier = await prisma.dossier.findUnique({
+    where: { code_dossier: codeDossier },
+    select: { etudiant: { select: { prenom: true, nom: true, email: true, telephone: true } } },
+  });
+  const etudiant = dossier?.etudiant;
+  await sendMail({
+    to: process.env.ADMIN_NOTIFICATION_EMAIL || process.env.CONTACT_EMAIL || 'capadmis.france@gmail.com',
+    subject: `Document ${action} — ${codeDossier}`,
+    message: `Un document a été ${action} dans un dossier étudiant.\n\nDossier : ${codeDossier}\nType de document : ${type}\nÉtudiant : ${etudiant ? `${etudiant.prenom} ${etudiant.nom}` : 'Non identifié'}\nEmail : ${etudiant?.email || 'Non renseigné'}\nTéléphone : ${etudiant?.telephone || 'Non renseigné'}`,
+  });
+}
+
 export const ajouterPieceJointe = async (req: MulterRequest, res: Response) => {
   try {
     const { codeDossier, type } = req.body as { codeDossier: string; type: TypePieceJointe };
@@ -101,6 +115,9 @@ export const ajouterPieceJointe = async (req: MulterRequest, res: Response) => {
       data: { nom, codeDossier, type },
       select: PIECE_SELECT,
     });
+
+    notifierDocument(codeDossier, piece.type, 'ajouté')
+      .catch((mailError) => console.error('[Email] Notification d’ajout de document non envoyée :', mailError));
 
     return res.status(201).json({ message: 'Pièce jointe ajoutée', piece });
   } catch (error) {
@@ -289,6 +306,10 @@ export const modifierPieceJointe = async (req: MulterRequest, res: Response) => 
     }
 
     const updated = await prisma.piece_jointe.update({ where: { id }, data, select: PIECE_SELECT });
+
+    notifierDocument(updated.codeDossier, updated.type, 'modifié')
+      .catch((mailError) => console.error('[Email] Notification de modification de document non envoyée :', mailError));
+
     return res.status(200).json({ message: 'Pièce jointe mise à jour', piece: updated });
   } catch (error) {
     console.error(error);
