@@ -4,6 +4,7 @@ import { sendMail } from '../lib/mailer.js';
 import type { PersonnelRequest } from '../middleware/personnelMiddleware.js';
 
 const CONTACT_RECIPIENT = process.env.CONTACT_EMAIL || 'capadmis.france@gmail.com';
+const STATUTS_APPEL = ['A_APPELER', 'APPELE', 'JOINT', 'NON_JOINT'] as const;
 
 function buildContactEmailHtml(nom: string, email: string, telephone: string | null, sujet: string, message: string): string {
   const year = new Date().getFullYear();
@@ -227,13 +228,19 @@ export const toggleAppele = async (req: PersonnelRequest, res: Response) => {
     const contact = await prisma.contacter_moi.findUnique({ where: { id } });
     if (!contact) return res.status(404).json({ message: 'Contact introuvable' });
 
+    const { statut } = req.body as { statut?: string };
+    const prochainStatut = statut ?? (contact.appele ? 'A_APPELER' : 'APPELE');
+    if (!STATUTS_APPEL.includes(prochainStatut as typeof STATUTS_APPEL[number])) {
+      return res.status(400).json({ message: `Statut invalide. Valeurs : ${STATUTS_APPEL.join(', ')}` });
+    }
+
     const updated = await prisma.contacter_moi.update({
       where: { id },
-      data: { appele: !contact.appele },
+      data: { statutAppel: prochainStatut, appele: prochainStatut !== 'A_APPELER' },
     });
 
     return res.status(200).json({
-      message: `Statut appelé ${updated.appele ? 'activé' : 'désactivé'}`,
+      message: 'Statut d’appel mis à jour',
       data: updated,
     });
   } catch (error) {

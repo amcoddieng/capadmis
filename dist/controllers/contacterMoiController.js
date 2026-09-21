@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma.js';
 import { sendMail } from '../lib/mailer.js';
 const CONTACT_RECIPIENT = process.env.CONTACT_EMAIL || 'capadmis.france@gmail.com';
+const STATUTS_APPEL = ['A_APPELER', 'APPELE', 'JOINT', 'NON_JOINT'];
 function buildContactEmailHtml(nom, email, telephone, sujet, message) {
     const year = new Date().getFullYear();
     return `<!DOCTYPE html>
@@ -203,12 +204,17 @@ export const toggleAppele = async (req, res) => {
         const contact = await prisma.contacter_moi.findUnique({ where: { id } });
         if (!contact)
             return res.status(404).json({ message: 'Contact introuvable' });
+        const { statut } = req.body;
+        const prochainStatut = statut ?? (contact.appele ? 'A_APPELER' : 'APPELE');
+        if (!STATUTS_APPEL.includes(prochainStatut)) {
+            return res.status(400).json({ message: `Statut invalide. Valeurs : ${STATUTS_APPEL.join(', ')}` });
+        }
         const updated = await prisma.contacter_moi.update({
             where: { id },
-            data: { appele: !contact.appele },
+            data: { statutAppel: prochainStatut, appele: prochainStatut !== 'A_APPELER' },
         });
         return res.status(200).json({
-            message: `Statut appelé ${updated.appele ? 'activé' : 'désactivé'}`,
+            message: 'Statut d’appel mis à jour',
             data: updated,
         });
     }
