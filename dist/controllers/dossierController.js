@@ -246,4 +246,70 @@ export const assignerConseiller = async (req, res) => {
         return res.status(500).json({ message: 'Erreur serveur' });
     }
 };
+const CHECKLIST_FIELDS = [
+    'verifier_documents', 'creer_adresse_mail', 'creer_dossier_etudes_en_france',
+    'remplir_informations_personnelles', 'faire_choix_formations', 'rediger_motivations',
+    'verifier_entierement_dossier', 'soumettre_dossier', 'paiement_frais',
+    'choisir_date_entretien', 'coaching_preparation_entretien', 'valider_choix_definitif',
+    'telecharger_accord_inscription', 'remplir_formulaire_visa', 'rassembler_documents',
+    'prendre_rendez_depot', 'recevoir_mail_fin_procedure', 'deposer_dossier_visa',
+];
+async function verifierAccesChecklist(req, dossierId) {
+    const dossier = await prisma.dossier.findUnique({
+        where: { id: dossierId },
+        select: { code_dossier: true, conseiller_admission_id: true, conseiller_visa_id: true },
+    });
+    if (!dossier)
+        return { erreur: 'Dossier introuvable' };
+    const personnel = req.personnel;
+    const estAdmin = personnel?.role === 'admin' || personnel?.role === 'superadmin';
+    const estAssigne = personnel?.id === dossier.conseiller_admission_id || personnel?.id === dossier.conseiller_visa_id;
+    if (!estAdmin && !estAssigne)
+        return { erreur: 'Accès refusé' };
+    return { dossier };
+}
+export const obtenirChecklistDossier = async (req, res) => {
+    try {
+        const id = Number(req.params['id']);
+        if (!Number.isInteger(id))
+            return res.status(400).json({ message: 'ID invalide' });
+        const acces = await verifierAccesChecklist(req, id);
+        if ('erreur' in acces)
+            return res.status(acces.erreur === 'Dossier introuvable' ? 404 : 403).json({ message: acces.erreur });
+        const checklist = await prisma.checklist_dossier.upsert({
+            where: { code_dossier: acces.dossier.code_dossier },
+            create: { code_dossier: acces.dossier.code_dossier },
+            update: {},
+        });
+        return res.status(200).json({ checklist });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Erreur serveur' });
+    }
+};
+export const modifierChecklistDossier = async (req, res) => {
+    try {
+        const id = Number(req.params['id']);
+        if (!Number.isInteger(id))
+            return res.status(400).json({ message: 'ID invalide' });
+        const { champ, valeur } = req.body;
+        if (!champ || !CHECKLIST_FIELDS.includes(champ) || typeof valeur !== 'boolean') {
+            return res.status(400).json({ message: 'Champ de checklist ou valeur invalide' });
+        }
+        const acces = await verifierAccesChecklist(req, id);
+        if ('erreur' in acces)
+            return res.status(acces.erreur === 'Dossier introuvable' ? 404 : 403).json({ message: acces.erreur });
+        const checklist = await prisma.checklist_dossier.upsert({
+            where: { code_dossier: acces.dossier.code_dossier },
+            create: { code_dossier: acces.dossier.code_dossier, [champ]: valeur },
+            update: { [champ]: valeur },
+        });
+        return res.status(200).json({ message: 'Checklist mise à jour', checklist });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Erreur serveur' });
+    }
+};
 //# sourceMappingURL=dossierController.js.map

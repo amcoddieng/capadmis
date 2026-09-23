@@ -14,4 +14,6 @@ export declare const changerStatus: (req: Request & {
     };
 }, res: Response) => Promise<Response<any, Record<string, any>>>;
 export declare const assignerConseiller: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+export declare const obtenirChecklistDossier: (req: PersonnelRequest, res: Response) => Promise<Response<any, Record<string, any>>>;
+export declare const modifierChecklistDossier: (req: PersonnelRequest, res: Response) => Promise<Response<any, Record<string, any>>>;
 //# sourceMappingURL=dossierController.d.ts.map

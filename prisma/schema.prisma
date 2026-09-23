@@ -160,8 +160,35 @@ model dossier {
   infos_dossier           infos_dossier?
   pieces_jointes          piece_jointe[]
   dossiers_universite     dossier_universite[]
+  checklist               checklist_dossier?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
+}
+
+model checklist_dossier {
+  id                              Int      @id @default(autoincrement())
+  code_dossier                    String   @unique
+  dossier                         dossier  @relation(fields: [code_dossier], references: [code_dossier], onDelete: Cascade)
+  verifier_documents              Boolean  @default(false)
+  creer_adresse_mail              Boolean  @default(false)
+  creer_dossier_etudes_en_france  Boolean  @default(false)
+  remplir_informations_personnelles Boolean @default(false)
+  faire_choix_formations          Boolean  @default(false)
+  rediger_motivations             Boolean  @default(false)
+  verifier_entierement_dossier    Boolean  @default(false)
+  soumettre_dossier               Boolean  @default(false)
+  paiement_frais                  Boolean  @default(false)
+  choisir_date_entretien          Boolean  @default(false)
+  coaching_preparation_entretien  Boolean  @default(false)
+  valider_choix_definitif         Boolean  @default(false)
+  telecharger_accord_inscription  Boolean  @default(false)
+  remplir_formulaire_visa         Boolean  @default(false)
+  rassembler_documents            Boolean  @default(false)
+  prendre_rendez_depot            Boolean  @default(false)
+  recevoir_mail_fin_procedure     Boolean  @default(false)
+  deposer_dossier_visa            Boolean  @default(false)
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
 }
 
 model infos_dossier {
