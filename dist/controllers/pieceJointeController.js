@@ -172,6 +172,7 @@ const TYPE_PJ_FOLDERS = {
     LETTRE_MOTIVATION: 'dossier autres',
     CV: 'dossier autres',
     ATTESTATION: 'dossier autres',
+    ATTESTATION_ACCREDITATION: 'dossier autres',
     AUTRE: 'dossier autres',
 };
 function sanitizeFolderName(name) {

@@ -203,6 +203,7 @@ const TYPE_PJ_FOLDERS: Record<string, string> = {
   LETTRE_MOTIVATION: 'dossier autres',
   CV: 'dossier autres',
   ATTESTATION: 'dossier autres',
+  ATTESTATION_ACCREDITATION: 'dossier autres',
   AUTRE: 'dossier autres',
 };
 
