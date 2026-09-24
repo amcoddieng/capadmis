@@ -300,10 +300,22 @@ export const modifierChecklistDossier = async (req, res) => {
         const acces = await verifierAccesChecklist(req, id);
         if ('erreur' in acces)
             return res.status(acces.erreur === 'Dossier introuvable' ? 404 : 403).json({ message: acces.erreur });
-        const checklist = await prisma.checklist_dossier.upsert({
+        const checklistActuelle = await prisma.checklist_dossier.upsert({
             where: { code_dossier: acces.dossier.code_dossier },
-            create: { code_dossier: acces.dossier.code_dossier, [champ]: valeur },
-            update: { [champ]: valeur },
+            create: { code_dossier: acces.dossier.code_dossier },
+            update: {},
+        });
+        const index = CHECKLIST_FIELDS.indexOf(champ);
+        const valeurs = checklistActuelle;
+        if (valeur && index > 0 && !valeurs[CHECKLIST_FIELDS[index - 1]]) {
+            return res.status(409).json({ message: 'Terminez d’abord l’étape précédente' });
+        }
+        if (!valeur && CHECKLIST_FIELDS.slice(index + 1).some(field => valeurs[field])) {
+            return res.status(409).json({ message: 'Décochez d’abord les étapes suivantes' });
+        }
+        const checklist = await prisma.checklist_dossier.update({
+            where: { code_dossier: acces.dossier.code_dossier },
+            data: { [champ]: valeur },
         });
         return res.status(200).json({ message: 'Checklist mise à jour', checklist });
     }
