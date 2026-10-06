@@ -202,14 +202,17 @@ export const assignerConseiller = async (req, res) => {
         if (isNaN(id))
             return res.status(400).json({ message: 'ID invalide' });
         const { type, conseiller_id } = req.body;
-        if (!type || !conseiller_id) {
-            return res.status(400).json({ message: 'type (admission|visa) et conseiller_id sont requis' });
+        if (type !== 'admission' && type !== 'visa') {
+            return res.status(400).json({ message: 'type (admission|visa) est requis' });
+        }
+        if (conseiller_id !== null && (!Number.isInteger(Number(conseiller_id)) || Number(conseiller_id) <= 0)) {
+            return res.status(400).json({ message: 'conseiller_id doit être un identifiant valide ou null' });
         }
         const roleAttendu = type === 'admission' ? 'conseiller_admission' : 'conseiller_visa';
-        const conseiller = await prisma.personnel.findUnique({ where: { id: Number(conseiller_id) } });
-        if (!conseiller)
+        const conseiller = conseiller_id === null ? null : await prisma.personnel.findUnique({ where: { id: Number(conseiller_id) } });
+        if (conseiller_id !== null && !conseiller)
             return res.status(404).json({ message: 'Conseiller introuvable' });
-        if (conseiller.role !== roleAttendu) {
+        if (conseiller && conseiller.role !== roleAttendu) {
             return res.status(400).json({ message: `Ce personnel n'est pas un ${roleAttendu}` });
         }
         const dossier = await prisma.dossier.findUnique({ where: { id } });
@@ -218,28 +221,30 @@ export const assignerConseiller = async (req, res) => {
         const estPremiereAssignationAdmission = type === 'admission' && !dossier.conseiller_admission_id;
         const data = type === 'admission'
             ? {
-                conseiller_admission_id: Number(conseiller_id),
-                ...(estPremiereAssignationAdmission ? { status: 'EN_COURS_D_ETUDE' } : {}),
+                conseiller_admission_id: conseiller?.id ?? null,
+                ...(estPremiereAssignationAdmission && conseiller ? { status: 'EN_COURS_D_ETUDE' } : {}),
             }
-            : { conseiller_visa_id: Number(conseiller_id) };
+            : { conseiller_visa_id: conseiller?.id ?? null };
         const updated = await prisma.dossier.update({ where: { id }, data, select: DOSSIER_SELECT });
-        const etudiant = updated.etudiant;
-        const notifTypeEtudiant = type === 'admission'
-            ? 'assignation_conseiller_admission'
-            : 'assignation_conseiller_visa';
-        envoyerNotification(notifTypeEtudiant, etudiant.email, {
-            prenomDestinataire: etudiant.prenom,
-            nomDestinataire: etudiant.nom,
-            codeDossier: updated.code_dossier,
-            prenomConseiller: conseiller.prenom,
-            nomConseiller: conseiller.nom,
-        }).catch(console.error);
-        envoyerNotification('assignation_dossier', conseiller.email, {
-            prenomDestinataire: conseiller.prenom,
-            nomDestinataire: conseiller.nom,
-            codeDossier: updated.code_dossier,
-        }).catch(console.error);
-        return res.status(200).json({ message: 'Conseiller assigné avec succès', dossier: updated });
+        if (conseiller) {
+            const etudiant = updated.etudiant;
+            const notifTypeEtudiant = type === 'admission'
+                ? 'assignation_conseiller_admission'
+                : 'assignation_conseiller_visa';
+            envoyerNotification(notifTypeEtudiant, etudiant.email, {
+                prenomDestinataire: etudiant.prenom,
+                nomDestinataire: etudiant.nom,
+                codeDossier: updated.code_dossier,
+                prenomConseiller: conseiller.prenom,
+                nomConseiller: conseiller.nom,
+            }).catch(console.error);
+            envoyerNotification('assignation_dossier', conseiller.email, {
+                prenomDestinataire: conseiller.prenom,
+                nomDestinataire: conseiller.nom,
+                codeDossier: updated.code_dossier,
+            }).catch(console.error);
+        }
+        return res.status(200).json({ message: conseiller ? 'Conseiller assigné avec succès' : 'Conseiller retiré avec succès', dossier: updated });
     }
     catch (error) {
         console.error(error);
