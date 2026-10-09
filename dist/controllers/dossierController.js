@@ -128,7 +128,7 @@ export const changerStatus = async (req, res) => {
             return res.status(404).json({ message: 'Dossier introuvable' });
         const { status, status_admission, status_visa } = req.body;
         const VALID_STATUS = ['non_demarre', 'EN_COURS_D_ETUDE', 'VALIDE', 'CHANGEMENT_A_APPORTER', 'DOCUMENT_MANQUANT'];
-        const VALID_ADMISSION = ['ADMISSION_EN_COURS', 'ADMISSION_VALIDE', 'ADMISSION_INVALIDE'];
+        const VALID_ADMISSION = ['NON_OUVERT', 'TRAITEMENT_EN_COURS', 'PAIEMENT_AUTORISE', 'ENTRETIEN_A_FAIRE', 'VALIDE', 'REJETE'];
         const VALID_VISA = ['DEMANDE_VISA_EN_COURS', 'DEMANDE_VISA_VALIDE', 'DEMANDE_VISA_INVALIDE'];
         const isAdminOrSuperAdmin = callerRole === 'superadmin' || callerRole === 'admin';
         const isConseillerAdmission = callerRole === 'conseiller_admission';
@@ -162,7 +162,7 @@ export const changerStatus = async (req, res) => {
             return res.status(400).json({ message: `status_visa invalide. Valeurs : ${VALID_VISA.join(', ')}` });
         }
         const effectiveStatus = status
-            ?? (status_admission === 'ADMISSION_EN_COURS' ? 'VALIDE' : undefined);
+            ?? (status_admission === 'TRAITEMENT_EN_COURS' ? 'VALIDE' : undefined);
         const data = {};
         if (effectiveStatus)
             data.status = effectiveStatus;

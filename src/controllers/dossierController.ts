@@ -146,7 +146,7 @@ export const changerStatus = async (req: Request & { personnel?: { id: number; r
     };
 
     const VALID_STATUS: StatusDossier[] = ['non_demarre', 'EN_COURS_D_ETUDE', 'VALIDE', 'CHANGEMENT_A_APPORTER', 'DOCUMENT_MANQUANT'];
-    const VALID_ADMISSION: StatusAdmission[] = ['ADMISSION_EN_COURS', 'ADMISSION_VALIDE', 'ADMISSION_INVALIDE'];
+    const VALID_ADMISSION: StatusAdmission[] = ['NON_OUVERT', 'TRAITEMENT_EN_COURS', 'PAIEMENT_AUTORISE', 'ENTRETIEN_A_FAIRE', 'VALIDE', 'REJETE'];
     const VALID_VISA: StatusVisa[] = ['DEMANDE_VISA_EN_COURS', 'DEMANDE_VISA_VALIDE', 'DEMANDE_VISA_INVALIDE'];
 
     const isAdminOrSuperAdmin = callerRole === 'superadmin' || callerRole === 'admin';
@@ -182,7 +182,7 @@ export const changerStatus = async (req: Request & { personnel?: { id: number; r
     }
 
     const effectiveStatus: StatusDossier | undefined = status
-      ?? (status_admission === 'ADMISSION_EN_COURS' ? 'VALIDE' : undefined);
+      ?? (status_admission === 'TRAITEMENT_EN_COURS' ? 'VALIDE' : undefined);
 
     const data: { status?: StatusDossier; status_admission?: StatusAdmission; status_visa?: StatusVisa } = {};
     if (effectiveStatus) data.status = effectiveStatus;
