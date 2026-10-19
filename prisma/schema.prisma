@@ -115,6 +115,11 @@ enum StatutDossierUniversite {
   en_attente
 }
 
+enum AvisChoixUniversite {
+  CHOIX_VALIDES
+  CHOIX_A_REVOIR
+}
+
 model personnel {
   id        Int      @id @default(autoincrement())
   prenom    String
@@ -262,6 +267,9 @@ model dossier_universite {
   region             String
   statut             StatutDossierUniversite @default(en_attente)
   message_universite String?
+  lettre_motivation  String?
+  cv                 String?
+  avis_etudiant      AvisChoixUniversite?
   date_depot         DateTime                @default(now())
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
