@@ -170,6 +170,7 @@ model dossier {
   pieces_jointes          piece_jointe[]
   dossiers_universite     dossier_universite[]
   checklist               checklist_dossier?
+  paiement_campus_france  paiement_campus_france?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 }
@@ -225,6 +226,17 @@ model piece_jointe {
   status        StatusPieceJointe  @default(EN_COURS_DE_VERIFICATION)
   date_creation DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
+}
+
+model paiement_campus_france {
+  id            Int       @id @default(autoincrement())
+  code_dossier  String    @unique
+  dossier       dossier   @relation(fields: [code_dossier], references: [code_dossier], onDelete: Cascade)
+  montant       Int       @default(85000)
+  recu          String?   @unique
+  date_depot    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model notification {
