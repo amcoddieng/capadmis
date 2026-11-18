@@ -1,1 +1,1 @@
-{"version":3,"file":"googleSheets.d.ts","sourceRoot":"","sources":["../../src/lib/googleSheets.ts"],"names":[],"mappings":"AAMA,eAAO,MAAM,cAAc,QAA6F,CAAC;AACzH,eAAO,MAAM,SAAS,QAA4D,CAAC;AAoKnF,wBAAsB,iBAAiB,CAAC,IAAI,EAAE,MAAM,CAAC,MAAM,EAAE,MAAM,CAAC,GAAG,OAAO,CAAC,IAAI,CAAC,CA2BnF"}
+{"version":3,"file":"googleSheets.d.ts","sourceRoot":"","sources":["../../src/lib/googleSheets.ts"],"names":[],"mappings":"AAMA,eAAO,MAAM,cAAc,QAA6F,CAAC;AACzH,eAAO,MAAM,SAAS,QAA4D,CAAC;AAiLnF,wBAAsB,iBAAiB,CAAC,IAAI,EAAE,MAAM,CAAC,MAAM,EAAE,MAAM,CAAC,GAAG,OAAO,CAAC,IAAI,CAAC,CA2BnF"}

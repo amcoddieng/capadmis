@@ -81,9 +81,14 @@ export const soumettreLandingLead = async (req, res) => {
         if (anaq && !OUI_NON_JSNS.includes(anaq)) {
             return res.status(400).json({ message: 'Valeur « accréditation ANAQ-Sup » invalide.' });
         }
-        const dateSoumission = new Date().toLocaleString('sv-SE', { timeZone: 'Africa/Dakar' });
+        const now = new Date();
+        const dateSoumission = now.toLocaleDateString('sv-SE', { timeZone: 'Africa/Dakar' });
+        const heureSoumission = now.toLocaleTimeString('sv-SE', { timeZone: 'Africa/Dakar' });
+        const idSoumission = `SUB-${now.getTime().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
         const lead = {
+            id_soumission: idSoumission,
             date_soumission: dateSoumission,
+            heure_soumission: heureSoumission,
             nom_complet,
             whatsapp,
             email,
@@ -105,6 +110,7 @@ export const soumettreLandingLead = async (req, res) => {
             utm_campaign: str(body.utm_campaign, 200),
             utm_content: str(body.utm_content, 200),
             utm_term: str(body.utm_term, 200),
+            consent_donnees: 'Oui',
             consent_email: boolOuiNon(body.consent_email),
             consent_sms: boolOuiNon(body.consent_sms),
             consent_whatsapp: boolOuiNon(body.consent_whatsapp),

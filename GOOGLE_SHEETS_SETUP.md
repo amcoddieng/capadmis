@@ -37,6 +37,12 @@ ponctuation) et ne remplit que les colonnes reconnues — voir `HEADER_ALIASES` 
 `src/lib/googleSheets.ts`. Les colonnes non reconnues restent vides ; les champs sans
 colonne correspondante ne sont pas écrits.
 
+**Mapping vérifié en production le 18/11/2026** contre les en-têtes réels de l'onglet
+(27 colonnes remplies, `ID Prospect` laissé vide — réservé à la phase 2 CRM) :
+`ID Soumission` ← `SUB-XXXXXXXX-XXXXX` généré, `Date de soumission` ← `YYYY-MM-DD` (Dakar),
+`Heure de soumission` ← `HH:MM:SS`, `Consentement au traitement des données` ← `Oui`,
+`Medium` écrit aussi dans `Support / Medium d'acquisition`.
+
 | Champ formulaire / payload | Colonne(s) visée(s) |
 | --- | --- |
 | `date_soumission` | Date et heure de soumission (format `AAAA-MM-JJ HH:MM:SS`, fuseau Dakar) |
