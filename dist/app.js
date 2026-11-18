@@ -16,6 +16,7 @@ import dashboardRoutes from './route/dashboardRoutes.js';
 import whatsappRoutes from './route/whatsappRoutes.js';
 import contacterMoiRoutes from './route/contacterMoiRoutes.js';
 import paiementCampusFranceRoutes from './route/paiementCampusFranceRoutes.js';
+import landingLeadRoutes from './route/landingLeadRoutes.js';
 const app = express();
 // accepter les requêtes depuis le frontend http://localhost:5173 et https://capadmis.netlify.app
 const allowedOrigins = ['http://localhost:5173', 'https://capadmis.netlify.app', 'https://capadmis.com', 'https://www.capadmis.com'];
@@ -76,5 +77,6 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/contacter-moi', contacterMoiRoutes);
 app.use('/api/paiements-campus-france', paiementCampusFranceRoutes);
+app.use('/api/landing-leads', landingLeadRoutes);
 export default app;
 //# sourceMappingURL=app.js.map
